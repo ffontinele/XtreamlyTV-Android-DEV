@@ -1,6 +1,8 @@
 package com.xtreamlytv.androidtv.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +33,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.xtreamlytv.androidtv.model.Credentials
+import com.xtreamlytv.androidtv.data.CloudSync
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import com.xtreamlytv.androidtv.ui.theme.palette
 
 @Composable
@@ -39,10 +46,27 @@ fun LoginScreen(state: AppUiState, onConnect: (Credentials) -> Unit) {
     var username by remember(state.credentials) { mutableStateOf(state.credentials?.username.orEmpty()) }
     var password by remember(state.credentials) { mutableStateOf(state.credentials?.password.orEmpty()) }
     var localError by remember { mutableStateOf<String?>(null) }
+    var showQr by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val qrUrl = remember(context) { CloudSync.getQrUrl(context) }
     val serverFocus = remember { FocusRequester() }
     val usernameFocus = remember { FocusRequester() }
     val passwordFocus = remember { FocusRequester() }
     val connectFocus = remember { FocusRequester() }
+
+
+    LaunchedEffect(Unit) {
+        CloudSync.registerDevice(context)
+        while (true) {
+            val pending = kotlinx.coroutines.Dispatchers.IO.let { kotlinx.coroutines.withContext(it) { CloudSync.pollPending(context) } }
+            pending.forEach { p ->
+                onConnect(Credentials(p.server, p.username, p.password))
+                kotlinx.coroutines.Dispatchers.IO.let { kotlinx.coroutines.withContext(it) { CloudSync.markLoaded(context, p.id) } }
+            }
+            delay(5000)
+        }
+    }
 
     LaunchedEffect(Unit) {
         when {
@@ -65,7 +89,7 @@ fun LoginScreen(state: AppUiState, onConnect: (Credentials) -> Unit) {
         ) {
             LoginBrandPanel(Modifier.weight(1.08f), compact)
             ProviderLoginCard(
-                modifier = Modifier.weight(0.92f).fillMaxHeight(),
+                modifier = Modifier.weight(0.92f),
                 compact = compact,
                 server = server,
                 username = username,
@@ -89,6 +113,9 @@ fun LoginScreen(state: AppUiState, onConnect: (Credentials) -> Unit) {
                 },
             )
         }
+    }
+    if (showQr) {
+        QrDialog(url = qrUrl, onDismiss = { showQr = false })
     }
 }
 
@@ -146,6 +173,7 @@ private fun ProviderLoginCard(
     onUsernameChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onConnect: () -> Unit,
+    onQrClick: () -> Unit,
 ) {
     val colors = palette()
     val cleartext = server.trim().startsWith("http://", ignoreCase = true)
@@ -161,7 +189,7 @@ private fun ProviderLoginCard(
     }
 
     Column(
-        modifier
+        modifier.verticalScroll(rememberScrollState())
             .background(colors.panel.copy(alpha = 0.95f), RoundedCornerShape(if (compact) 20.dp else 28.dp))
             .border(1.dp, Color.White.copy(alpha = 0.09f), RoundedCornerShape(if (compact) 20.dp else 28.dp))
             .padding(if (compact) 22.dp else 34.dp),
