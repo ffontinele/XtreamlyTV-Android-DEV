@@ -5,6 +5,8 @@ import android.widget.FrameLayout
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +40,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -76,6 +79,7 @@ fun PlayerScreen(
     var errorMessage by remember(request.item.id) { mutableStateOf<String?>(null) }
     var seekFeedback by remember { mutableStateOf<String?>(null) }
     var seekFeedback by remember { mutableStateOf<String?>(null) }
+    var seekFeedback by remember { mutableStateOf<String?>(null) }
 
     val player = remember(request.item.id, candidateIndex) {
         ExoPlayer.Builder(context).build().apply {
@@ -88,6 +92,12 @@ fun PlayerScreen(
     }
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    LaunchedEffect(seekFeedback) {
+        if (seekFeedback != null) {
+            delay(900L)
+            seekFeedback = null
+        }
+    }
     LaunchedEffect(seekFeedback) {
         if (seekFeedback != null) {
             delay(900L)
@@ -186,7 +196,28 @@ fun PlayerScreen(
                 }
             },
             update = { it.player = player },
-            modifier = Modifier.fillMaxSize().clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { showControls() },
+            modifier = Modifier.fillMaxSize(),
+        )
+
+        // GestureOverlay: capturas de toque acima do video
+        Box(
+            Modifier
+                .fillMaxSize()
+                .pointerInput(player) {
+                    detectTapGestures(
+                        onDoubleTap = { offset ->
+                            if (offset.x > size.width / 2f) {
+                                player.seekTo(player.currentPosition + 30_000L)
+                                seekFeedback = "⏩ +30s"
+                            } else {
+                                player.seekTo((player.currentPosition - 30_000L).coerceAtLeast(0L))
+                                seekFeedback = "⏪ -30s"
+                            }
+                            showControls()
+                        },
+                        onTap = { if (controlsVisible) togglePlayback() else showControls() },
+                    )
+                },
         )
 
         if (controlsVisible) {
@@ -201,6 +232,7 @@ fun PlayerScreen(
                 onTogglePlay = { togglePlayback() },
                 onSeekForward = { player.seekTo(player.currentPosition + 30_000L); showControls() },
                 onToggleFavorite = { onToggleFavorite(); showControls() },
+                onSeekFraction = { frac -> player.seekTo((frac.coerceIn(0f, 1f) * duration).toLong()); showControls() },
             )
         }
 
@@ -212,6 +244,17 @@ fun PlayerScreen(
                     .padding(20.dp),
             ) {
                 Text(message, color = Color.White, fontSize = 14.sp)
+            }
+        }
+
+        seekFeedback?.let { label ->
+            Box(
+                Modifier
+                    .align(Alignment.Center)
+                    .background(Color(0xB3071014), RoundedCornerShape(14.dp))
+                    .padding(horizontal = 22.dp, vertical = 12.dp),
+            ) {
+                Text(label, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -251,6 +294,7 @@ private fun PlayerControls(
     onTogglePlay: () -> Unit = {},
     onSeekForward: () -> Unit = {},
     onToggleFavorite: () -> Unit = {},
+    onSeekFraction: (Float) -> Unit = {},
 ) {
     val colors = palette()
     Column(
@@ -276,7 +320,22 @@ private fun PlayerControls(
             Text(if (request.item.type == ContentType.LIVE) "LIVE" else formatDuration(position), color = colors.accent, fontSize = 11.sp)
         }
         if (request.item.type != ContentType.LIVE && duration > 0L) {
-            Box(Modifier.fillMaxWidth().height(3.dp).background(Color.White.copy(alpha = 0.12f), RoundedCornerShape(50))) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(18.dp)
+                    .pointerInput(duration) {
+                        detectTapGestures { offset -> onSeekFraction(offset.x / size.width.toFloat()) }
+                    }
+                    .pointerInput(duration) {
+                        detectHorizontalDragGestures(
+                            onDragStart = { offset -> onSeekFraction(offset.x / size.width.toFloat()) },
+                            onHorizontalDrag = { change, _ -> onSeekFraction(change.position.x / size.width.toFloat()) },
+                        )
+                    },
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Box(Modifier.fillMaxWidth().height(3.dp).background(Color.White.copy(alpha = 0.12f), RoundedCornerShape(50)))
                 Box(
                     Modifier
                         .fillMaxWidth((position.toFloat() / duration.toFloat()).coerceIn(0f, 1f))
