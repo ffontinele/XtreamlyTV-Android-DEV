@@ -41,6 +41,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
@@ -73,6 +74,7 @@ fun PlayerScreen(
     var position by remember(request.item.id) { mutableLongStateOf(request.startPositionMs) }
     var duration by remember(request.item.id) { mutableLongStateOf(0L) }
     var errorMessage by remember(request.item.id) { mutableStateOf<String?>(null) }
+    var seekFeedback by remember { mutableStateOf<String?>(null) }
 
     val player = remember(request.item.id, candidateIndex) {
         ExoPlayer.Builder(context).build().apply {
@@ -85,6 +87,12 @@ fun PlayerScreen(
     }
 
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    LaunchedEffect(seekFeedback) {
+        if (seekFeedback != null) {
+            delay(900L)
+            seekFeedback = null
+        }
+    }
 
     DisposableEffect(player) {
         val listener = object : Player.Listener {
@@ -197,6 +205,17 @@ fun PlayerScreen(
                     .padding(20.dp),
             ) {
                 Text(message, color = Color.White, fontSize = 14.sp)
+            }
+        }
+
+        seekFeedback?.let { label ->
+            Box(
+                Modifier
+                    .align(Alignment.Center)
+                    .background(Color(0xB3071014), RoundedCornerShape(14.dp))
+                    .padding(horizontal = 22.dp, vertical = 12.dp),
+            ) {
+                Text(label, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
