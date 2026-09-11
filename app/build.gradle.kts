@@ -7,6 +7,14 @@ plugins {
 }
 
 android {
+    signingConfigs {
+        create("xdrayme") {
+            storeFile = rootProject.file("keystore/xdrayme.jks")
+            storePassword = "xdrayme123"
+            keyAlias = "xdrayme"
+            keyPassword = "xdrayme123"
+        }
+    }
     namespace = "com.xtreamlytv.androidtv"
     compileSdk = 36
 
@@ -22,7 +30,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("xdrayme")
+        }
         release {
+            signingConfig = signingConfigs.getByName("xdrayme")
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
