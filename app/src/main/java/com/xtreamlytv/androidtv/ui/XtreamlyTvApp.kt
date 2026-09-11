@@ -33,6 +33,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
+import com.xtreamlytv.androidtv.data.CloudSync
+import com.xtreamlytv.androidtv.model.Credentials
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import android.widget.Toast
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.xtreamlytv.androidtv.model.ContentType
@@ -50,6 +56,7 @@ fun XtreamlyTvApp(
     onContentReady: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
     LaunchedEffect(Unit) {
         // Keep the platform starting window visible until Compose has produced a
         // frame containing the branded loading surface. This prevents the TV
@@ -57,6 +64,21 @@ fun XtreamlyTvApp(
         withFrameNanos { }
         onContentReady()
     }
+    LaunchedEffect(Unit) {
+        CloudSync.registerDevice(context)
+        while (true) {
+            val pending = withContext(Dispatchers.IO) { CloudSync.pollPending(context) }
+            pending.forEach { p ->
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Lista recebida: " + p.name, Toast.LENGTH_LONG).show()
+                    viewModel.connect(Credentials(p.server, p.username, p.password))
+                }
+                withContext(Dispatchers.IO) { CloudSync.markLoaded(context, p.id) }
+            }
+            delay(5000)
+        }
+    }
+
 
     CompositionLocalProvider(LocalTvPalette provides paletteFor(state.settings.theme)) {
         MaterialTheme {
