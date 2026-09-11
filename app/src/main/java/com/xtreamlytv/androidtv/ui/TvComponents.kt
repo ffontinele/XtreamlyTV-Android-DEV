@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -334,11 +335,17 @@ fun TvChip(
 }
 
 @Composable
-fun SectionHeader(title: String, meta: String? = null, modifier: Modifier = Modifier) {
+fun SectionHeader(
+    title: String,
+    meta: String? = null,
+    modifier: Modifier = Modifier,
+    actions: (@Composable RowScope.() -> Unit)? = null,
+) {
     val colors = palette()
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
         Text(title, color = colors.text, fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
         if (!meta.isNullOrBlank()) Text(meta, color = colors.muted, fontSize = 10.sp)
+        actions?.let { it() }
     }
 }
 

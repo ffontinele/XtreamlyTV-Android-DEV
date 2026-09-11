@@ -293,6 +293,15 @@ private fun ContentRail(
     SectionHeader(
         spec.title,
         "${spec.items.size} ${if (spec.items.size == 1) "item" else "items"}",
+        actions = {
+            Spacer(Modifier.width(12.dp))
+            TvButton(
+                "Clear all",
+                { viewModel.clearHistoryForType(spec.type) },
+                Modifier.width(96.dp),
+                TvButtonStyle.Secondary,
+            )
+        },
     )
     Spacer(Modifier.height(9.dp))
     LazyRow(
