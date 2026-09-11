@@ -1,6 +1,8 @@
 package com.xtreamlytv.androidtv.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -91,7 +93,7 @@ fun DetailScreen(item: CatalogItem, state: AppUiState, viewModel: AppViewModel) 
         if (focusedEpisodeIndex >= 0) episodeGridState.ensureFocusedRowVisible(focusedEpisodeIndex, 2)
     }
 
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         val series = item.type == ContentType.SERIES
         Box(
             Modifier

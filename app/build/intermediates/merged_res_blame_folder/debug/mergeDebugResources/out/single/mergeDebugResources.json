@@ -1,0 +1,126 @@
+[
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_ic_folder.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/ic_folder.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/mipmap-xhdpi_tv_banner.png.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/mipmap-xhdpi/tv_banner.png"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable-nodpi_xtreamlytv_foreground.png.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable-nodpi/xtreamlytv_foreground.png"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/mipmap-xxxhdpi_tv_banner.png.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/mipmap-xxxhdpi/tv_banner.png"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_xtreamlytv_icon_foreground.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/xtreamlytv_icon_foreground.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_ic_home.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/ic_home.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_ic_tv.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/ic_tv.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_launch_background.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/launch_background.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_ic_search.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/ic_search.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable-nodpi_xtreamlytv_mark.png.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable-nodpi/xtreamlytv_mark.png"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_ic_heart.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/ic_heart.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/mipmap-mdpi_tv_banner.png.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/mipmap-mdpi/tv_banner.png"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_ic_star.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/ic_star.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_xtreamlytv_wordmark.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/xtreamlytv_wordmark.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_ic_popcorn.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/ic_popcorn.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_ic_trophy.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/ic_trophy.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_xtreamlytv_mark_vector.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/xtreamlytv_mark_vector.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/mipmap-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_ic_play_box.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/ic_play_box.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/mipmap-hdpi_tv_banner.png.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/mipmap-hdpi/tv_banner.png"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable-nodpi_xtreamlytv_mark_baseline.png.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable-nodpi/xtreamlytv_mark_baseline.png"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_ic_smile.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/ic_smile.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable-nodpi_xtreamlytv_wordmark_baseline.png.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable-nodpi/xtreamlytv_wordmark_baseline.png"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_ic_plus.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/ic_plus.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/mipmap-xxhdpi_tv_banner.png.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/mipmap-xxhdpi/tv_banner.png"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/drawable_ic_settings.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/drawable/ic_settings.xml"
+    },
+    {
+        "merged": "com.xtreamlytv.androidtv.app-debug-43:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.xtreamlytv.androidtv.app-main-45:/mipmap-anydpi-v26/ic_launcher.xml"
+    }
+]

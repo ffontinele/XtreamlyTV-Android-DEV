@@ -235,7 +235,7 @@ private fun CategoryRail(
                         bottom = bottomPadding,
                     ),
                     verticalArrangement = Arrangement.spacedBy(gap),
-                    userScrollEnabled = false,
+                    userScrollEnabled = true,
                 ) {
                     listItemsIndexed(categories, key = { _, category -> category.id }) { index, category ->
                         val active = category.id == selected?.id
