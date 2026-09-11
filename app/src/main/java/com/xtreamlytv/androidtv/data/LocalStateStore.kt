@@ -121,8 +121,9 @@ class LocalStateStore(context: Context) {
 
     fun clearHistoryForType(type: ContentType) {
         val current = load()
-        val filteredRecent = current.recent.filter { it.type != type }
-        val filteredProgress = current.progress.filterKeys { !it.startsWith("${type.name}:") }
+        val typesToClear = if (type == ContentType.SERIES) setOf(ContentType.SERIES, ContentType.EPISODE) else setOf(type)
+        val filteredRecent = current.recent.filter { it.type !in typesToClear }
+        val filteredProgress = current.progress.filterKeys { key -> typesToClear.none { key.startsWith("${it.name}:") } }
         saveRecent(filteredRecent)
         saveProgress(filteredProgress)
     }

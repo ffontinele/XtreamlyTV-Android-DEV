@@ -686,8 +686,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun clearHistoryForType(type: ContentType) {
-        val filteredRecent = _state.value.recent.filter { it.type != type }
-        val filteredProgress = _state.value.progress.filterKeys { !it.startsWith("${type.name}:") }
+        val typesToClear = if (type == ContentType.SERIES) setOf(ContentType.SERIES, ContentType.EPISODE) else setOf(type)
+        val filteredRecent = _state.value.recent.filter { it.type !in typesToClear }
+        val filteredProgress = _state.value.progress.filterKeys { key -> typesToClear.none { key.startsWith("${it.name}:") } }
         _state.update { it.copy(recent = filteredRecent, progress = filteredProgress) }
         viewModelScope.launch(Dispatchers.IO) { localStateStore.clearHistoryForType(type) }
     }
