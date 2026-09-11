@@ -39,6 +39,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.xtreamlytv.androidtv.model.Credentials
 import com.xtreamlytv.androidtv.ui.theme.palette
 
@@ -114,13 +115,24 @@ fun ProviderManagerCard(state: AppUiState, viewModel: AppViewModel) {
             }
         }
         deleteConfirmId?.let { pid ->
-            AlertDialog(
-                onDismissRequest = { deleteConfirmId = null },
-                title = { Text("Delete provider", fontWeight = FontWeight.Bold) },
-                text = { Text("Remove this provider from the list?") },
-                confirmButton = { TextButton(onClick = { viewModel.deleteProvider(pid); deleteConfirmId = null }) { Text("Delete") } },
-                dismissButton = { TextButton(onClick = { deleteConfirmId = null }) { Text("Cancel") } },
-            )
+            Dialog(onDismissRequest = { deleteConfirmId = null }) {
+                Column(
+                    Modifier
+                        .width(460.dp)
+                        .background(colors.panelStrong.copy(alpha = 0.97f), RoundedCornerShape(18.dp))
+                        .border(1.dp, Color.White.copy(alpha = 0.09f), RoundedCornerShape(18.dp))
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text("Delete provider", color = colors.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text("Remove this provider from the list?", color = colors.muted, fontSize = 12.sp)
+                    Spacer(Modifier.height(6.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                        TvButton("Delete", { viewModel.deleteProvider(pid); deleteConfirmId = null }, Modifier.width(110.dp), TvButtonStyle.Danger)
+                        TvButton("Cancel", { deleteConfirmId = null }, Modifier.width(110.dp), TvButtonStyle.Secondary)
+                    }
+                }
+            }
         }
     }
 }
@@ -187,36 +199,32 @@ private fun ProviderEditDialog(
     var username by remember { mutableStateOf(initial.username) }
     var password by remember { mutableStateOf(initial.password) }
     var showPassword by remember { mutableStateOf(false) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title, fontWeight = FontWeight.Bold) },
-        text = {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.heightIn(max = 300.dp).verticalScroll(rememberScrollState()),
-            ) {
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = server, onValueChange = { server = it }, label = { Text("Server URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Username") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Password") },
-                    singleLine = true,
-                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        Text(
-                            if (showPassword) "HIDE" else "SHOW",
-                            color = palette().accent,
-                            fontSize = 9.sp,
-                            modifier = Modifier.clickable { showPassword = !showPassword },
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+    val colors = palette()
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            Modifier
+                .width(560.dp)
+                .verticalScroll(rememberScrollState())
+                .background(colors.panelStrong.copy(alpha = 0.97f), RoundedCornerShape(18.dp))
+                .border(1.dp, Color.White.copy(alpha = 0.09f), RoundedCornerShape(18.dp))
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(title, color = colors.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text("Fill in the provider details below.", color = colors.muted, fontSize = 11.sp)
+            Spacer(Modifier.height(4.dp))
+            TvTextField("Name", name, { name = it }, placeholder = "My list")
+            TvTextField("Server URL", server, { server = it }, placeholder = "http://provider.example:port")
+            TvTextField("Username", username, { username = it }, placeholder = "Provider username")
+            TvTextField("Password", password, { password = it }, placeholder = "Provider password", password = !showPassword)
+            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                TvButton(if (showPassword) "Hide password" else "Show password", { showPassword = !showPassword }, Modifier.width(180.dp), TvButtonStyle.Secondary)
             }
-        },
-        confirmButton = { TextButton(onClick = { onConfirm(name, Credentials(server = server, username = username, password = password)) }) { Text("Save") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-    )
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                TvButton("Save", { onConfirm(name, Credentials(server = server, username = username, password = password)) }, Modifier.width(110.dp))
+                TvButton("Cancel", onDismiss, Modifier.width(110.dp), TvButtonStyle.Secondary)
+            }
+        }
+    }
 }
