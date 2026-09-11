@@ -185,8 +185,6 @@ private fun EmptyHomeCard(
     }
 }
 
-}
-
 private data class HomeRailSpec(
     val type: ContentType,
     val title: String,
