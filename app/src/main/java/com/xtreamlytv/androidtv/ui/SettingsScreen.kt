@@ -150,8 +150,8 @@ fun SettingsScreen(state: AppUiState, viewModel: AppViewModel) {
                     streamFormatOptions().forEach { (label, format) ->
                         TvChip(
                             label = label,
-                            selected = state.settings.preferredFormat == format,
-                            onClick = { viewModel.updateSettings(state.settings.copy(preferredFormat = format)) },
+                            selected = state.settings.preferredStreamFormat == format,
+                            onClick = { viewModel.updateSettings(state.settings.copy(preferredStreamFormat = format)) },
                         )
                     }
                 }
@@ -365,13 +365,13 @@ private fun ProviderSummaryRow(label: String, value: String) {
 }
 
 private fun themeOptions() = listOf(
-    "Dusk" to AppTheme.DUSK,
-    "Sapphire" to AppTheme.SAPPHIRE,
-    "Forest" to AppTheme.FOREST,
-    "Ember" to AppTheme.EMBER,
+    "Dusk" to AppTheme.Dusk,
+    "Sapphire" to AppTheme.Sapphire,
+    "Forest" to AppTheme.Forest,
+    "Ember" to AppTheme.Ember,
 )
 
 private fun streamFormatOptions() = listOf(
     "HLS" to StreamFormat.HLS,
-    "TS" to StreamFormat.MPEGTS,
+    "TS" to StreamFormat.MpegTs,
 )

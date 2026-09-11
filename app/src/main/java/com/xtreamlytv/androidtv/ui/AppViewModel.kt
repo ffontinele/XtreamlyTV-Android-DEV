@@ -108,7 +108,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val (localResult, credentialsResult) = coroutineScope {
                 val localDeferred = async(Dispatchers.IO) { runCatching { localStateStore.load() } }
-                val credentialsDeferred = async(Dispatchers.IO) { runCatching { credentialsStore.load() } }
+                val credentialsDeferred = async(Dispatchers.IO) { runCatching { credentialsStore.loadActive() } }
                 localDeferred.await() to credentialsDeferred.await()
             }
             val local = localResult.getOrNull()
@@ -217,7 +217,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 client = candidate
                 categoryCache.clear()
                 if (persist) {
-                    withContext(Dispatchers.IO) { credentialsStore.save(normalizedCredentials) }
+                    withContext(Dispatchers.IO) {
+                        val list = credentialsStore.loadAll().toMutableList()
+                        val idx = list.indexOfFirst { it.server == normalizedCredentials.server && it.username == normalizedCredentials.username }
+                        if (idx >= 0) { list[idx] = normalizedCredentials.copy(id = list[idx].id, name = list[idx].name) } else { list.add(normalizedCredentials) }
+                        credentialsStore.saveAll(list)
+                        credentialsStore.setActive(normalizedCredentials.id)
+                    }
                 }
                 _state.update {
                     it.copy(
@@ -699,6 +705,43 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         val next = _state.value.progress - itemKey(item)
         _state.update { it.copy(progress = next) }
         viewModelScope.launch(Dispatchers.IO) { localStateStore.saveProgress(next) }
+    }
+
+    fun getProviders(): List<Credentials> = credentialsStore.loadAll()
+
+    fun addProvider(name: String, credentials: Credentials) {
+        val current = credentialsStore.loadAll().toMutableList()
+        val novo = credentials.copy(name = name.ifBlank { "Provider " + (current.size + 1) })
+        current.add(novo)
+        credentialsStore.saveAll(current)
+        credentialsStore.setActive(novo.id)
+        connect(novo)
+    }
+
+    fun updateProviderById(id: String, name: String, credentials: Credentials) {
+        val current = credentialsStore.loadAll().toMutableList()
+        val idx = current.indexOfFirst { it.id == id }
+        if (idx >= 0) {
+            current[idx] = credentials.copy(id = id, name = name.ifBlank { current[idx].name })
+            credentialsStore.saveAll(current)
+            if (credentialsStore.loadActive()?.id == id) connect(current[idx])
+        }
+    }
+
+    fun deleteProvider(id: String) {
+        val current = credentialsStore.loadAll().toMutableList()
+        val removed = current.firstOrNull { it.id == id } ?: return
+        current.remove(removed)
+        credentialsStore.saveAll(current)
+        if (credentialsStore.loadActive()?.id == id) {
+            if (current.isEmpty()) disconnect() else { credentialsStore.setActive(current[0].id); connect(current[0]) }
+        }
+    }
+
+    fun useProvider(id: String) {
+        val cred = credentialsStore.loadAll().find { it.id == id } ?: return
+        credentialsStore.setActive(id)
+        connect(cred)
     }
 
     fun disconnect() {
