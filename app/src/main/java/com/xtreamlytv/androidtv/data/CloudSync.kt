@@ -70,7 +70,10 @@ object CloudSync {
             .addHeader("x-zui-device-key", key)
             .post(body.toString().toRequestBody("application/json".toMediaType()))
             .build()
-        runCatching { client.newCall(req).execute().close() }
+        client.newCall(req).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: java.io.IOException) { android.util.Log.w("CloudSync", "request failed", e) }
+            override fun onResponse(call: okhttp3.Call, r: okhttp3.Response) { r.close() }
+        })
     }
 
     data class PendingPlaylist(val id: Int, val name: String, val server: String, val username: String, val password: String)
@@ -118,6 +121,9 @@ object CloudSync {
             .addHeader("x-zui-device-key", deviceKey)
             .patch(body.toString().toRequestBody("application/json".toMediaType()))
             .build()
-        runCatching { client.newCall(req).execute().close() }
+        client.newCall(req).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: java.io.IOException) { android.util.Log.w("CloudSync", "request failed", e) }
+            override fun onResponse(call: okhttp3.Call, r: okhttp3.Response) { r.close() }
+        })
     }
 }
