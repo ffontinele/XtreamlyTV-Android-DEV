@@ -230,53 +230,28 @@ fun DetailScreen(item: CatalogItem, state: AppUiState, viewModel: AppViewModel) 
             if (visibleEpisodes.isEmpty()) {
                 EmptyState("No episodes", "This provider did not return episode data for this series.", Modifier.weight(1f))
             } else {
-                BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
-                    val gap = 8.dp
-                    val topPadding = 2.dp
-                    val bottomPadding = 12.dp
-                    val available = maxHeight - topPadding - bottomPadding
-                    val desiredCardHeight = 68.dp
-                    val visibleRows = ((available.value + gap.value) / (desiredCardHeight.value + gap.value))
-                        .toInt()
-                        .coerceIn(1, 3)
-                    val density = LocalDensity.current
-                    val cardHeight = with(density) {
-                        val availablePx = (available - gap * (visibleRows - 1)).roundToPx()
-                        (availablePx / visibleRows).toDp()
-                    }
-
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        state = episodeGridState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(
-                            start = 2.dp,
-                            end = 2.dp,
-                            top = topPadding,
-                            bottom = bottomPadding,
-                        ),
-                        horizontalArrangement = Arrangement.spacedBy(gap),
-                        verticalArrangement = Arrangement.spacedBy(gap),
-                    ) {
-                        itemsIndexed(visibleEpisodes, key = { _, episode -> "episode:${episode.id}" }) { index, episode ->
-                            EpisodeCard(
-                                episode = episode,
-                                state = state,
-                                viewModel = viewModel,
-                                cardHeight = cardHeight,
-                                focusRequester = targetFocus.takeIf { index == targetIndex },
-                                onFocused = {
-                                    focusedEpisodeIndex = index
-                                    viewModel.rememberFocusedItem(
-                                        area = detailArea(item.id),
-                                        scope = detailScope,
-                                        key = itemKey(episode),
-                                    )
-                                },
-                            )
-                        }
-                    }
-                }
+                Column(
+            Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            visibleEpisodes.forEachIndexed { index, episode ->
+                EpisodeCard(
+                    episode = episode,
+                    state = state,
+                    viewModel = viewModel,
+                    cardHeight = 68.dp,
+                    focusRequester = targetFocus.takeIf { index == targetIndex },
+                    onFocused = {
+                        focusedEpisodeIndex = index
+                        viewModel.rememberFocusedItem(
+                            area = detailArea(item.id),
+                            scope = detailScope,
+                            key = itemKey(episode),
+                        )
+                    },
+                )
+            }
+        }
             }
         }
     }
