@@ -3,6 +3,11 @@ package com.xtreamlytv.androidtv.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.platform.LocalContext
+import com.xtreamlytv.androidtv.data.CloudSync
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,6 +48,8 @@ fun ProviderManagerCard(state: AppUiState, viewModel: AppViewModel) {
     var addingProvider by remember { mutableStateOf(false) }
     var editingProviderId by remember { mutableStateOf<String?>(null) }
     var deleteConfirmId by remember { mutableStateOf<String?>(null) }
+    var showQr by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Column(
         Modifier
@@ -81,7 +88,11 @@ fun ProviderManagerCard(state: AppUiState, viewModel: AppViewModel) {
         Spacer(Modifier.height(9.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             TvButton("+ Add provider", { addingProvider = true }, Modifier.width(150.dp))
-            TvButton("Disconnect", viewModel::disconnect, Modifier.width(120.dp), TvButtonStyle.Danger)
+            TvButton("QR Code", { showQr = true }, Modifier.width(110.dp), TvButtonStyle.Secondary)
+            TvButton("Disconnect", viewModel::disconnect, Modifier.width(140.dp), TvButtonStyle.Danger)
+        }
+        if (showQr) {
+            QrDialog(url = CloudSync.getQrUrl(context), onDismiss = { showQr = false })
         }
         if (addingProvider) {
             ProviderEditDialog(
@@ -158,8 +169,8 @@ private fun ProviderRow(
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             TvButton("Use", onUse, Modifier.width(64.dp), TvButtonStyle.Primary)
             TvButton("Edit", onEdit, Modifier.width(64.dp), TvButtonStyle.Secondary)
-            TvButton(if (showPassword) "Hide" else "Show", onTogglePassword, Modifier.width(70.dp), TvButtonStyle.Secondary)
-            TvButton("Delete", onDelete, Modifier.width(76.dp), TvButtonStyle.Danger)
+            TvButton(if (showPassword) "Hide" else "Show", onTogglePassword, Modifier.width(84.dp), TvButtonStyle.Secondary)
+            TvButton("Delete", onDelete, Modifier.width(88.dp), TvButtonStyle.Danger)
         }
     }
 }
@@ -180,7 +191,10 @@ private fun ProviderEditDialog(
         onDismissRequest = onDismiss,
         title = { Text(title, fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.heightIn(max = 300.dp).verticalScroll(rememberScrollState()),
+            ) {
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(value = server, onValueChange = { server = it }, label = { Text("Server URL") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Username") }, singleLine = true, modifier = Modifier.fillMaxWidth())
