@@ -269,7 +269,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             }, catalogsLoading = false) }
                 val currentScreen = _state.value.screen as? AppScreen.Catalog
                 if (currentScreen != null && _state.value.selectedCategories[currentScreen.type] == null) {
-                    categories[currentScreen.type]?.firstOrNull()?.let { firstCategory ->
+                    (categories[currentScreen.type]?.firstOrNull { it.id != "all" } ?: categories[currentScreen.type]?.firstOrNull())?.let { firstCategory ->
                         selectCategory(currentScreen.type, firstCategory)
                     }
                 }
@@ -332,7 +332,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun openCatalog(type: ContentType) {
         val categories = _state.value.categories[type].orEmpty()
-        val selected = _state.value.selectedCategories[type] ?: categories.firstOrNull()
+        val selected = _state.value.selectedCategories[type] ?: categories.firstOrNull { it.id != "all" } ?: categories.firstOrNull()
         val remembered = lastFocusByArea[catalogArea(type)]
         _state.update {
             it.copy(
