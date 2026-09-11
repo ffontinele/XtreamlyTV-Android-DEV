@@ -66,6 +66,8 @@ object CloudSync {
             .addHeader("apikey", SUPABASE_KEY)
             .addHeader("Authorization", "Bearer $SUPABASE_KEY")
             .addHeader("Content-Type", "application/json")
+            .addHeader("x-zui-device-id", id)
+            .addHeader("x-zui-device-key", key)
             .post(body.toString().toRequestBody("application/json".toMediaType()))
             .build()
         runCatching { client.newCall(req).execute().close() }
