@@ -62,9 +62,13 @@ class XtreamClient(
             ContentType.SERIES -> "get_series"
             ContentType.EPISODE -> error("Use seriesEpisodes")
         }
-        val response = runCatching { requestJson(action, mapOf("category_id" to categoryId)) }
+        val response = if (categoryId == "all") {
+            runCatching { requestJson(action, emptyMap()) }
+        } else {
+            runCatching { requestJson(action, mapOf("category_id" to categoryId)) }
+        }
             .recoverCatching {
-                if (type == ContentType.SERIES) requestJson("get_series_streams", mapOf("category_id" to categoryId))
+                if (type == ContentType.SERIES) requestJson("get_series_streams", if (categoryId == "all") emptyMap() else mapOf("category_id" to categoryId))
                 else throw it
             }.getOrThrow()
         normalizeCollection(response, preferredItemKeys(type)).mapNotNull { parseItem(it, type) }

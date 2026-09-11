@@ -119,6 +119,13 @@ class LocalStateStore(context: Context) {
         preferences.edit().putString(KEY_PROGRESS, root.toString()).apply()
     }
 
+    fun clearHistoryForType(type: ContentType) {
+        val filteredRecent = recent.filter { it.type != type }
+        val filteredProgress = progress.filterKeys { !it.startsWith("${type.name}:") }
+        saveRecent(filteredRecent)
+        saveProgress(filteredProgress)
+    }
+
     fun clearHistory() {
         preferences.edit().remove(KEY_RECENT).remove(KEY_PROGRESS).apply()
     }

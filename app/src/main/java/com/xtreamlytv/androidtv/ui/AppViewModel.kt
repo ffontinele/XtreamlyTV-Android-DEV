@@ -264,7 +264,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                     .mapValues { (_, deferred) -> deferred.await() }
             }
             if (client === candidate) {
-                _state.update { it.copy(categories = categories, catalogsLoading = false) }
+                _state.update { it.copy(categories = categories.mapValues { (_, list) ->
+                listOf(Category(id = "all", name = "ALL")) + list
+            }, catalogsLoading = false) }
                 val currentScreen = _state.value.screen as? AppScreen.Catalog
                 if (currentScreen != null && _state.value.selectedCategories[currentScreen.type] == null) {
                     categories[currentScreen.type]?.firstOrNull()?.let { firstCategory ->
@@ -681,6 +683,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun clearCatalogCache() {
         categoryCache.clear()
         _state.update { it.copy(items = emptyList(), loadedItems = emptyMap(), error = null) }
+    }
+
+    fun clearHistoryForType(type: ContentType) {
+        val filteredRecent = _state.value.recent.filter { it.type != type }
+        val filteredProgress = _state.value.progress.filterKeys { !it.startsWith("${type.name}:") }
+        _state.update { it.copy(recent = filteredRecent, progress = filteredProgress) }
+        viewModelScope.launch(Dispatchers.IO) { localStateStore.clearHistoryForType(type) }
     }
 
     fun clearHistory() {
