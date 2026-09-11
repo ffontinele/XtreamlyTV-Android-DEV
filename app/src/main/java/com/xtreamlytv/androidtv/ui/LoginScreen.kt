@@ -103,6 +103,7 @@ fun LoginScreen(state: AppUiState, onConnect: (Credentials) -> Unit) {
                 onServerChange = { server = it; localError = null },
                 onUsernameChange = { username = it; localError = null },
                 onPasswordChange = { password = it; localError = null },
+                onQrClick = { showQr = true },
                 onConnect = {
                     when {
                         server.isBlank() -> { localError = "Enter your provider URL."; serverFocus.requestFocus() }
@@ -208,6 +209,14 @@ private fun ProviderLoginCard(
         Box(Modifier.fillMaxWidth().height(if (compact) 34.dp else 42.dp), contentAlignment = Alignment.CenterStart) {
             Text(statusText, color = statusColor, fontSize = if (compact) 9.sp else 11.sp, lineHeight = if (compact) 12.sp else 15.sp, maxLines = 2)
         }
+        Spacer(Modifier.height(8.dp))
+        TvButton(
+            label = "☁ Add via QR",
+            onClick = onQrClick,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !loading,
+            focusRequester = remember { FocusRequester() },
+        )
         Spacer(Modifier.height(8.dp))
         TvButton(
             label = when {

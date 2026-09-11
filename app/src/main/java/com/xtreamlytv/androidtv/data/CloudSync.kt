@@ -3,13 +3,15 @@ package com.xtreamlytv.androidtv.data
 import android.content.Context
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 object CloudSync {
     private const val SUPABASE_URL = "https://fyqpqqrtmgcsjnygxkqv.supabase.co"
-    private const val SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFFzIiwicmVmIjoiZnlxcHFxcnRtZ2Nzam55Z3hrcXYiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4ODEzMTc2MSwiZXhwIjoyMTAzNzA3NzYxfQ.QInVAAU7i0GNSkWRzP6HedqkP5U6HJBDRhpQyey0eh8"
+    private const val SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5cXBxcXJ0bWdjc2pueWd4a3F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxMzE3NjEsImV4cCI6MjEwMzcwNzc2MX0.QInVAAU7i0GNSkWRzP6HedqkP5U6HJBDRhpQyey0eh8"
     private const val POLL_INTERVAL_MS = 5000L
 
     private val client = OkHttpClient.Builder()
@@ -64,9 +66,7 @@ object CloudSync {
             .addHeader("apikey", SUPABASE_KEY)
             .addHeader("Authorization", "Bearer $SUPABASE_KEY")
             .addHeader("Content-Type", "application/json")
-            .post(okhttp3.RequestBody.create(
-                okhttp3.MediaType.parse("application/json"), body.toString()
-            ))
+            .post(body.toString().toRequestBody("application/json".toMediaType()))
             .build()
         runCatching { client.newCall(req).execute().close() }
     }
@@ -87,7 +87,7 @@ object CloudSync {
             .build()
         return runCatching {
             val response = client.newCall(req).execute()
-            val body = response.body()?.string() ?: "[]"
+            val body = response.body?.string() ?: "[]"
             response.close()
             val arr = org.json.JSONArray(body)
             (0 until arr.length()).mapNotNull { i ->
@@ -114,9 +114,7 @@ object CloudSync {
             .addHeader("Content-Type", "application/json")
             .addHeader("x-zui-device-id", deviceId)
             .addHeader("x-zui-device-key", deviceKey)
-            .patch(okhttp3.RequestBody.create(
-                okhttp3.MediaType.parse("application/json"), body.toString()
-            ))
+            .patch(body.toString().toRequestBody("application/json".toMediaType()))
             .build()
         runCatching { client.newCall(req).execute().close() }
     }
