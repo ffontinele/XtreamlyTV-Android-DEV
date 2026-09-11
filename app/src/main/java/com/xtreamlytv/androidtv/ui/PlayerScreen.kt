@@ -4,6 +4,8 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -169,7 +171,7 @@ fun PlayerScreen(
                 }
             },
             update = { it.player = player },
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { showControls() },
         )
 
         if (controlsVisible) {
@@ -180,6 +182,10 @@ fun PlayerScreen(
                 playing = playing,
                 position = position,
                 duration = duration,
+                onSeekBack = { player.seekTo((player.currentPosition - 30_000L).coerceAtLeast(0L)); showControls() },
+                onTogglePlay = { togglePlayback() },
+                onSeekForward = { player.seekTo(player.currentPosition + 30_000L); showControls() },
+                onToggleFavorite = { onToggleFavorite(); showControls() },
             )
         }
 
@@ -204,6 +210,10 @@ private fun PlayerControls(
     playing: Boolean,
     position: Long,
     duration: Long,
+    onSeekBack: () -> Unit = {},
+    onTogglePlay: () -> Unit = {},
+    onSeekForward: () -> Unit = {},
+    onToggleFavorite: () -> Unit = {},
 ) {
     val colors = palette()
     Column(
@@ -238,11 +248,11 @@ private fun PlayerControls(
                 )
             }
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("← 30s", color = colors.muted, fontSize = 9.sp)
-            Text(if (playing) "OK Pause" else "OK Play", color = colors.text, fontSize = 10.sp)
-            Text("30s →", color = colors.muted, fontSize = 9.sp)
-            Text("MENU ${if (favorite) "Unfavorite" else "Favorite"}", color = colors.muted, fontSize = 9.sp)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("← 30s", color = colors.muted, fontSize = 9.sp, modifier = Modifier.clickable { onSeekBack() }.padding(6.dp))
+            Text(if (playing) "OK Pause" else "OK Play", color = colors.text, fontSize = 10.sp, modifier = Modifier.clickable { onTogglePlay() }.padding(6.dp))
+            Text("30s →", color = colors.muted, fontSize = 9.sp, modifier = Modifier.clickable { onSeekForward() }.padding(6.dp))
+            Text("MENU ${if (favorite) "Unfavorite" else "Favorite"}", color = colors.muted, fontSize = 9.sp, modifier = Modifier.clickable { onToggleFavorite() }.padding(6.dp))
             if (request.item.type == ContentType.LIVE) {
                 Text("↑/↓ Change channel", color = colors.muted, fontSize = 9.sp)
             } else {
