@@ -133,6 +133,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             if (savedCredentials == null) {
                 _state.update {
                     it.copy(
+                        screen = AppScreen.Home,
                         initializing = false,
                         error = credentialsResult.exceptionOrNull()?.let {
                             "Saved provider details could not be read. Enter them again."

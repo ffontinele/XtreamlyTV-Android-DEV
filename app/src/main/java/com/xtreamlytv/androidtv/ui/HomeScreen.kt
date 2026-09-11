@@ -88,13 +88,21 @@ fun HomeScreen(state: AppUiState, viewModel: AppViewModel) {
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         item {
-            HomeHero(
-                featured = featured,
-                viewModel = viewModel,
-                requestDefaultFocus = !restoreFocusOnEntry,
-                primaryFocus = heroPrimaryFocus,
-                downFocus = firstShortcutFocus,
-            )
+            if (state.credentials == null) {
+                EmptyHomeCard(
+                    onClickAdd = { viewModel.openSettings() },
+                    focusRequester = heroPrimaryFocus,
+                    requestDefaultFocus = !restoreFocusOnEntry,
+                )
+            } else {
+                HomeHero(
+                    featured = featured,
+                    viewModel = viewModel,
+                    requestDefaultFocus = !restoreFocusOnEntry,
+                    primaryFocus = heroPrimaryFocus,
+                    downFocus = firstShortcutFocus,
+                )
+            }
         }
         item {
             SectionHeader("Browse your provider")
@@ -133,6 +141,48 @@ fun HomeScreen(state: AppUiState, viewModel: AppViewModel) {
             )
         }
     }
+
+@Composable
+private fun EmptyHomeCard(
+    onClickAdd: () -> Unit,
+    focusRequester: FocusRequester,
+    requestDefaultFocus: Boolean,
+) {
+    val colors = palette()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(colors.panel.copy(alpha = 0.84f), RoundedCornerShape(18.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(18.dp))
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            "No provider added yet",
+            color = colors.text,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            "Add a provider to start watching your favorite content.",
+            color = colors.muted,
+            fontSize = 13.sp,
+            lineHeight = 16.sp,
+        )
+        Spacer(Modifier.height(8.dp))
+        TvButton(
+            "+ Add provider",
+            onClickAdd,
+            Modifier.width(180.dp).focusRequester(focusRequester),
+            TvButtonStyle.Primary,
+        )
+    }
+    LaunchedEffect(requestDefaultFocus) {
+        if (requestDefaultFocus) runCatching { focusRequester.requestFocus() }
+    }
+}
+
 }
 
 private data class HomeRailSpec(
