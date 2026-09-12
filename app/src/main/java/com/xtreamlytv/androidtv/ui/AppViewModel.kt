@@ -101,6 +101,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val localStateStore by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         LocalStateStore(application)
     }
+    private val backupManager by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        BackupManager(application)
+    }
     private var client: XtreamClient? = null
     private val categoryCache = LinkedHashMap<String, List<CatalogItem>>(16, 0.75f, true)
     private var catalogRequestId = 0L
@@ -723,7 +726,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             _state.update { it.copy(backupMessage = msg) }
             if (result is ImportResult.Success) {
                 // Recarregar providers após importação
-                reloadProviders()
+                val providers = credentialsStore.loadAll()
+                if (providers.isNotEmpty()) {
+                    val active = credentialsStore.loadActive() ?: providers.first()
+                    _state.update { it.copy(providers = providers, activeProvider = active) }
+                    useProvider(active.id)
+                }
             }
             kotlinx.coroutines.delay(5000)
             _state.update { it.copy(backupMessage = null) }
