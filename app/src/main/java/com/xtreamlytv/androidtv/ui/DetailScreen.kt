@@ -188,10 +188,10 @@ fun DetailScreen(item: CatalogItem, state: AppUiState, viewModel: AppViewModel) 
                     ) {
                         if (series && resumeEpisode != null) {
                             TvButton(
-                                label = "Continue S${resumeEpisode.season ?: 0} E${resumeEpisode.episode ?: 0}",
+                                label = "Continue S" + (resumeEpisode.season ?: 0) + " E" + (resumeEpisode.episode ?: 0),
                                 leading = "▶",
                                 onClick = { viewModel.play(resumeEpisode, state.detailEpisodes) },
-                                modifier = Modifier.width(170.dp),
+                                modifier = Modifier.width(210.dp),
                                 focusRequester = primaryActionFocus,
                             )
                         }
