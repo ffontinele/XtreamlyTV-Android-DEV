@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.xtreamlytv.androidtv.data.CredentialsStore
 import com.xtreamlytv.androidtv.data.BackupManager
 import com.xtreamlytv.androidtv.data.VideoDownloader
+import com.xtreamlytv.androidtv.data.OfflineFile
 import com.xtreamlytv.androidtv.data.StreamUrlBuilder
 import android.content.Context
 import android.content.ClipData
@@ -70,6 +71,7 @@ sealed interface AppScreen {
         val returnFocus: FocusRequest? = null,
     ) : AppScreen
     data object Settings : AppScreen
+    data object OfflineVideos : AppScreen
 }
 
 data class AppUiState(
@@ -786,6 +788,44 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         Toast.makeText(getApplication(), "🔗 Link copiado: ${item.name.take(40)}", Toast.LENGTH_SHORT).show()
     }
     
+    val downloads get() = downloader.active
+
+    fun openOfflineVideos() {
+        _state.update { it.copy(screen = AppScreen.OfflineVideos) }
+    }
+
+    fun refreshDownloads() {
+        downloader.queryProgress()
+    }
+
+    fun scanOffline(): List<OfflineFile> = downloader.listFiles()
+
+    fun playOffline(file: OfflineFile) {
+        val item = CatalogItem(
+            id = "offline_" + file.name.replace(" ", "_"),
+            type = ContentType.MOVIE,
+            name = file.name,
+        )
+        val origin = _state.value.screen
+        val returnFocus = focusForScreen(origin)
+        val request = PlayerRequest(
+            item = item,
+            queue = listOf(item),
+            urlCandidates = listOf(android.net.Uri.fromFile(java.io.File(file.path)).toString()),
+            startPositionMs = 0L,
+        )
+        _state.update { it.copy(screen = AppScreen.Player(request, origin, returnFocus)) }
+    }
+
+    fun deleteOffline(file: OfflineFile) {
+        downloader.deleteFile(file.path)
+        downloader.dropByPath(file.path)
+    }
+
+    fun cancelDownload(id: Long) {
+        downloader.cancel(id)
+    }
+
     fun clearHistory() {
         _state.update { it.copy(recent = emptyList(), progress = emptyMap(), error = null) }
         viewModelScope.launch(Dispatchers.IO) { localStateStore.clearHistory() }

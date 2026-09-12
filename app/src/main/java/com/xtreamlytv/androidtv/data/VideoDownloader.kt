@@ -101,9 +101,34 @@ class VideoDownloader(private val context: Context) {
         runCatching { File(filePath).takeIf { it.exists() }?.delete() }
     }
 
+    fun dropByPath(filePath: String) {
+        _active.value = _active.value.filterNot { it.filePath == filePath }
+    }
+
+    fun listFiles(): List<OfflineFile> =
+        downloadDir.listFiles()
+            ?.filter { it.isFile && it.length() > 0 }
+            ?.map {
+                OfflineFile(
+                    name = it.nameWithoutExtension.replace('_', ' '),
+                    path = it.absolutePath,
+                    sizeBytes = it.length(),
+                    lastModified = it.lastModified(),
+                )
+            }
+            ?.sortedByDescending { f -> f.lastModified }
+            ?: emptyList()
+
     fun isDownloaded(itemId: String): String? =
         _active.value.firstOrNull { it.itemId == itemId && it.status == DownloadTask.Status.SUCCESSFUL }?.filePath
 
     fun listDownloaded(): List<DownloadTask> =
         _active.value.filter { it.status == DownloadTask.Status.SUCCESSFUL }
 }
+
+data class OfflineFile(
+    val name: String,
+    val path: String,
+    val sizeBytes: Long,
+    val lastModified: Long,
+)

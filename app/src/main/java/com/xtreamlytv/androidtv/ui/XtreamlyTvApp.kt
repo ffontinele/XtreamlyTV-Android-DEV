@@ -155,6 +155,7 @@ private fun AppShell(state: AppUiState, viewModel: AppViewModel) {
                         AppScreen.FavoriteGroupsManager -> StableFavoriteGroupsManagerScreen(state, viewModel)
                         is AppScreen.FavoriteGroupEditor -> FavoriteGroupEditorScreen(screen.groupId, state, viewModel)
                         AppScreen.Settings -> SettingsScreen(state, viewModel)
+                        AppScreen.OfflineVideos -> OfflineVideosScreen(state, viewModel)
                         else -> Unit
                     }
                 }
@@ -184,6 +185,7 @@ private fun Sidebar(
             SidebarItem("play", "Series", screen.section() == AppSection.Series) { viewModel.openCatalog(ContentType.SERIES) }
             SidebarItem("heart", "Favorites", screen.section() == AppSection.Favorites, viewModel::openFavorites)
             SidebarItem("settings", "Settings", screen.section() == AppSection.Settings, viewModel::openSettings)
+            SidebarItem("folder", "Vídeos offline", screen.section() == AppSection.Offline) { viewModel.openOfflineVideos() }
         }
         Spacer(Modifier.weight(1f))
     }
@@ -256,7 +258,7 @@ private fun ClockText() {
 
 private fun formatClock(): String = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
 
-private enum class AppSection { Home, Live, Movies, Series, Favorites, Settings }
+private enum class AppSection { Home, Live, Movies, Series, Favorites, Settings, Offline }
 
 private fun AppScreen.section(): AppSection = when (this) {
     AppScreen.Home -> AppSection.Home
@@ -268,6 +270,7 @@ private fun AppScreen.section(): AppSection = when (this) {
     is AppScreen.Detail -> origin.section()
     AppScreen.Favorites, is AppScreen.FavoriteGroupBrowser, AppScreen.FavoriteGroupsManager, is AppScreen.FavoriteGroupEditor -> AppSection.Favorites
     AppScreen.Settings -> AppSection.Settings
+    AppScreen.OfflineVideos -> AppSection.Offline
     is AppScreen.Player -> origin.section()
     AppScreen.Login -> AppSection.Home
 }
@@ -286,6 +289,7 @@ private fun screenTitle(screen: AppScreen): String = when (screen) {
     AppScreen.FavoriteGroupsManager -> "Edit Groups"
     is AppScreen.FavoriteGroupEditor -> if (screen.groupId == null) "Add Group" else "Edit Group"
     AppScreen.Settings -> "Settings"
+    AppScreen.OfflineVideos -> "Vídeos offline"
     is AppScreen.Player -> screen.request.item.name
     AppScreen.Login -> "XtreamlyTV"
 }
