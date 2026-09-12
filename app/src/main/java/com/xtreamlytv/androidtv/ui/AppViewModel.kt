@@ -723,9 +723,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             _state.update { it.copy(backupMessage = msg) }
             if (result is ImportResult.Success) {
                 // Recarregar providers após importação
-                val creds = credentialsStore.loadAll()
-                val active = credentialsStore.loadActive()
-                _state.update { it.copy(providers = creds, activeProvider = active) }
+                reloadProviders()
             }
             kotlinx.coroutines.delay(5000)
             _state.update { it.copy(backupMessage = null) }
