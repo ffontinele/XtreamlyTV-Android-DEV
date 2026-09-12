@@ -1,6 +1,7 @@
 package com.xtreamlytv.androidtv.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.border
@@ -350,9 +351,17 @@ private fun EpisodeCard(
                 Text(episode.name, color = colors.text, fontSize = 10.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 if (progress != null) Text("▶ Continue from \${formatDuration(progress.positionMs)}", color = colors.accent, fontSize = 8.sp, fontWeight = FontWeight.Bold)
             }
-            Text("▶", color = colors.accent, fontSize = 12.sp, modifier = Modifier.padding(end = 4.dp))
-            Text("⬇", color = colors.muted, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 4.dp))
-            Text("🔗", color = colors.muted, fontSize = 10.sp)
+            Text("▶", color = colors.accent, fontSize = 14.sp)
+            Spacer(Modifier.width(10.dp))
+            Box(
+                Modifier.size(44.dp).clickable { viewModel.downloadVideo(episode) },
+                contentAlignment = Alignment.Center,
+            ) { Text("⬇", color = colors.accent, fontSize = 18.sp) }
+            Spacer(Modifier.width(4.dp))
+            Box(
+                Modifier.size(44.dp).clickable { viewModel.copyStreamLink(episode) },
+                contentAlignment = Alignment.Center,
+            ) { Text("🔗", color = colors.accent, fontSize = 16.sp) }
         }
     }
 }
