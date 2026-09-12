@@ -32,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -86,6 +87,8 @@ fun PlayerScreen(
     var errorMessage by remember(request.item.id) { mutableStateOf<String?>(null) }
     var seekFeedback by remember { mutableStateOf<String?>(null) }
     var gestureIndicator by remember { mutableStateOf<String?>(null) }
+    var volumeFraction by remember { mutableFloatStateOf(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / maxVolume.toFloat()) }
+    var lastVolumeInt by remember { mutableIntStateOf(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)) }
 
     val player = remember(request.item.id, candidateIndex) {
         ExoPlayer.Builder(context).build().apply {
@@ -173,24 +176,17 @@ fun PlayerScreen(
     fun showControls() { controlsVisible = true }
 
     fun adjustVolume(delta: Float) {
-        try {
-            val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-            if (maxVolume <= 0) return
-            val step = (delta * maxVolume).toInt()
-            val next = (current + step).coerceIn(0, maxVolume)
+        if (maxVolume <= 0) return
+        volumeFraction = (volumeFraction + delta).coerceIn(0f, 1f)
+        val newVolumeInt = (volumeFraction * maxVolume).toInt().coerceIn(0, maxVolume)
+        if (newVolumeInt != lastVolumeInt) {
+            lastVolumeInt = newVolumeInt
             runCatching {
-                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, next, 0)
-            }
-            val pct = ((next.toFloat() / maxVolume) * 100).toInt()
-            gestureIndicator = "🔊 $pct%"
-        } catch (_: Exception) {
-            // Fallback: usa AudioManager.FLAG_SHOW_UI como ultimo recurso
-            runCatching {
-                val flags = AudioManager.FLAG_SHOW_UI
-                if (delta > 0) audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, flags)
-                else audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, flags)
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, newVolumeInt, 0)
             }
         }
+        val pct = (volumeFraction * 100).toInt()
+        gestureIndicator = "🔊 $pct%"
     }
 
     fun adjustBrightness(delta: Float) {
