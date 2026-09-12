@@ -78,8 +78,6 @@ fun PlayerScreen(
     var duration by remember(request.item.id) { mutableLongStateOf(0L) }
     var errorMessage by remember(request.item.id) { mutableStateOf<String?>(null) }
     var seekFeedback by remember { mutableStateOf<String?>(null) }
-    var seekFeedback by remember { mutableStateOf<String?>(null) }
-    var seekFeedback by remember { mutableStateOf<String?>(null) }
 
     val player = remember(request.item.id, candidateIndex) {
         ExoPlayer.Builder(context).build().apply {
