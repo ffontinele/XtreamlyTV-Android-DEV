@@ -49,6 +49,38 @@ fun SettingsScreen(state: AppUiState, viewModel: AppViewModel) {
         item {
             ProviderManagerCard(state, viewModel)
         }
+        item {
+            SettingsCard(
+                title = "Backup & Restauracao",
+                description = "Exporte suas contas para um arquivo em Documents/XtreamlyTV/ ou restaure de um backup existente.",
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (state.backupMessage != null) {
+                    Text(
+                        state.backupMessage,
+                        color = palette().accent,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    TvButton(
+                        label = "Exportar contas",
+                        onClick = viewModel::exportBackup,
+                        modifier = Modifier.weight(1f),
+                        style = TvButtonStyle.Secondary
+                    )
+                    TvButton(
+                        label = "Importar backup",
+                        onClick = viewModel::importBackup,
+                        modifier = Modifier.weight(1f),
+                        style = TvButtonStyle.Secondary
+                    )
+                }
+            }
+        }
+
 
         item {
             SettingsCard("Appearance", "Choose a skin. The layout remains identical while the background, panels, focus ring, and highlights change hue.") {

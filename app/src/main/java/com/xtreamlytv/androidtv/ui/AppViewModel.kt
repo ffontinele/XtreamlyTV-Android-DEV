@@ -4,6 +4,9 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.xtreamlytv.androidtv.data.CredentialsStore
+import com.xtreamlytv.androidtv.data.BackupManager
+import com.xtreamlytv.androidtv.data.ExportResult
+import com.xtreamlytv.androidtv.data.ImportResult
 import com.xtreamlytv.androidtv.data.LocalStateStore
 import com.xtreamlytv.androidtv.data.ProviderUrl
 import com.xtreamlytv.androidtv.data.XtreamClient
@@ -63,6 +66,7 @@ sealed interface AppScreen {
 }
 
 data class AppUiState(
+    val backupMessage: String? = null,
     val screen: AppScreen = AppScreen.Login,
     val initializing: Boolean = true,
     val loading: Boolean = false,
@@ -694,6 +698,35 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) { localStateStore.clearHistoryForType(type) }
     }
 
+    fun exportBackup() {
+        viewModelScope.launch {
+            val result = backupManager.export()
+            val msg = when (result) {
+                is ExportResult.Success -> result.message
+                is ExportResult.Error -> result.message
+            }
+            _state.update { it.copy(backupMessage = msg) }
+            kotlinx.coroutines.delay(5000)
+            _state.update { it.copy(backupMessage = null) }
+        }
+    }
+    
+    fun importBackup() {
+        viewModelScope.launch {
+            val result = backupManager.import()
+            val msg = when (result) {
+                is ImportResult.Success -> result.message
+                is ImportResult.Error -> result.message
+            }
+            _state.update { it.copy(backupMessage = msg) }
+            if (result is ImportResult.Success) {
+                reloadProviders()
+            }
+            kotlinx.coroutines.delay(5000)
+            _state.update { it.copy(backupMessage = null) }
+        }
+    }
+    
     fun clearHistory() {
         _state.update { it.copy(recent = emptyList(), progress = emptyMap(), error = null) }
         viewModelScope.launch(Dispatchers.IO) { localStateStore.clearHistory() }
