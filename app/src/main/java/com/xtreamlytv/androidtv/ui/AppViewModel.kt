@@ -725,11 +725,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             }
             _state.update { it.copy(backupMessage = msg) }
             if (result is ImportResult.Success) {
-                // Recarregar providers após importação
+                // Recarregar providers após importação (useProvider já recarrega tudo)
                 val providers = credentialsStore.loadAll()
                 if (providers.isNotEmpty()) {
                     val active = credentialsStore.loadActive() ?: providers.first()
-                    _state.update { it.copy(providers = providers, activeProvider = active) }
                     useProvider(active.id)
                 }
             }
