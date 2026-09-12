@@ -7,6 +7,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.xtreamlytv.androidtv.model.Credentials
 
 class BackupManager(private val context: Context) {
     
@@ -52,7 +53,7 @@ class BackupManager(private val context: Context) {
                 "active_provider_id" to activeId
             )
             
-            val json = org.json.JSONObject(data as Map<*, *>).toString(2)
+            val json = org.json.JSONObject().apply { data.forEach { (k, v) -> put(k, v) } }.toString(2)
             val file = File(backupDir, "backup.xtreamly")
             file.writeText(json)
             

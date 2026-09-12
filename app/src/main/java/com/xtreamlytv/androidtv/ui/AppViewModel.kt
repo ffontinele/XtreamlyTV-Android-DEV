@@ -704,6 +704,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val msg = when (result) {
                 is ExportResult.Success -> result.message
                 is ExportResult.Error -> result.message
+                else -> "Erro desconhecido"
             }
             _state.update { it.copy(backupMessage = msg) }
             kotlinx.coroutines.delay(5000)
@@ -717,10 +718,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val msg = when (result) {
                 is ImportResult.Success -> result.message
                 is ImportResult.Error -> result.message
+                else -> "Erro desconhecido"
             }
             _state.update { it.copy(backupMessage = msg) }
             if (result is ImportResult.Success) {
-                reloadProviders()
+                // Recarregar providers após importação
+                val creds = credentialsStore.loadAll()
+                val active = credentialsStore.loadActive()
+                _state.update { it.copy(providers = creds, activeProvider = active) }
             }
             kotlinx.coroutines.delay(5000)
             _state.update { it.copy(backupMessage = null) }
