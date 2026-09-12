@@ -186,6 +186,15 @@ fun DetailScreen(item: CatalogItem, state: AppUiState, viewModel: AppViewModel) 
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
+                        if (series && resumeEpisode != null) {
+                            TvButton(
+                                label = "Continue S${resumeEpisode.season ?: 0} E${resumeEpisode.episode ?: 0}",
+                                leading = "▶",
+                                onClick = { viewModel.play(resumeEpisode, state.detailEpisodes) },
+                                modifier = Modifier.width(170.dp),
+                                focusRequester = primaryActionFocus,
+                            )
+                        }
                         if (!series) {
                             TvButton(
                                 label = if (progress != null && progress.positionMs > 30_000L) {
@@ -207,7 +216,7 @@ fun DetailScreen(item: CatalogItem, state: AppUiState, viewModel: AppViewModel) 
                             onClick = { viewModel.toggleFavorite(item) },
                             modifier = Modifier.width(142.dp),
                             style = TvButtonStyle.Secondary,
-                            focusRequester = if (series) primaryActionFocus else null,
+                            focusRequester = if (series && resumeEpisode == null) primaryActionFocus else null,
                         )
                         TvButton(
                             label = "Back",
