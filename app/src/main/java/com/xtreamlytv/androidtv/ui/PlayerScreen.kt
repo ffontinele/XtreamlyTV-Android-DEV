@@ -173,12 +173,24 @@ fun PlayerScreen(
     fun showControls() { controlsVisible = true }
 
     fun adjustVolume(delta: Float) {
-        val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
-        val step = (delta * maxVolume).toInt()
-        val next = (current + step).coerceIn(0, maxVolume)
-        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, next, 0)
-        val pct = ((next.toFloat() / maxVolume) * 100).toInt()
-        gestureIndicator = "🔊 $pct%"
+        try {
+            val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+            if (maxVolume <= 0) return
+            val step = (delta * maxVolume).toInt()
+            val next = (current + step).coerceIn(0, maxVolume)
+            runCatching {
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, next, 0)
+            }
+            val pct = ((next.toFloat() / maxVolume) * 100).toInt()
+            gestureIndicator = "🔊 $pct%"
+        } catch (_: Exception) {
+            // Fallback: usa AudioManager.FLAG_SHOW_UI como ultimo recurso
+            runCatching {
+                val flags = AudioManager.FLAG_SHOW_UI
+                if (delta > 0) audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, flags)
+                else audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, flags)
+            }
+        }
     }
 
     fun adjustBrightness(delta: Float) {
