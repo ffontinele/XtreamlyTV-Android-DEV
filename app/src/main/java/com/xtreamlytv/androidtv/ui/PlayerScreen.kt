@@ -1,4 +1,7 @@
 package com.xtreamlytv.androidtv.ui
+import android.app.Activity
+import android.content.Context
+import android.media.AudioManager
 
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -168,6 +171,27 @@ fun PlayerScreen(
     }
 
     fun showControls() { controlsVisible = true }
+
+    fun adjustVolume(delta: Float) {
+        val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        val step = (delta * maxVolume).toInt()
+        val next = (current + step).coerceIn(0, maxVolume)
+        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, next, 0)
+        val pct = ((next.toFloat() / maxVolume) * 100).toInt()
+        gestureIndicator = "🔊 $pct%"
+    }
+
+    fun adjustBrightness(delta: Float) {
+        activity?.let { act ->
+            val params = act.window.attributes
+            val current = params.screenBrightness.takeIf { it >= 0f } ?: 0.5f
+            val next = (current + delta).coerceIn(0.01f, 1f)
+            params.screenBrightness = next
+            act.window.attributes = params
+            val pct = (next * 100).toInt()
+            gestureIndicator = "☀️ $pct%"
+        }
+    }
     fun togglePlayback() {
         if (player.isPlaying) player.pause() else player.play()
         showControls()
