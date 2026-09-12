@@ -38,22 +38,25 @@ class BackupManager(private val context: Context) {
                 return ExportResult.Error("Nenhuma conta configurada para exportar")
             }
             
-            val data = mapOf(
-                "version" to 1,
-                "exported_at" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date()),
-                "providers" to creds.map { cred ->
-                    mapOf(
-                        "id" to cred.id,
-                        "name" to cred.name,
-                        "server" to cred.server,
-                        "username" to cred.username,
-                        "password" to cred.password
-                    )
-                },
-                "active_provider_id" to activeId
-            )
-            
-            val json = org.json.JSONObject().apply { data.forEach { (k, v) -> put(k, v) } }.toString(2)
+            val providersArr = org.json.JSONArray()
+            creds.forEach { cred ->
+                providersArr.put(
+                    org.json.JSONObject().apply {
+                        put("id", cred.id)
+                        put("name", cred.name)
+                        put("server", cred.server)
+                        put("username", cred.username)
+                        put("password", cred.password)
+                    }
+                )
+            }
+            val root = org.json.JSONObject().apply {
+                put("version", 1)
+                put("exported_at", SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date()))
+                put("providers", providersArr)
+                put("active_provider_id", activeId ?: "")
+            }
+            val json = root.toString(2)
             val file = File(backupDir, "backup.xtreamly")
             file.writeText(json)
             
