@@ -55,15 +55,22 @@ fun DetailScreen(item: CatalogItem, state: AppUiState, viewModel: AppViewModel) 
     val progress = state.progress[itemKey(item)]
     val favorite = state.favorites.any { it.type == item.type && it.id == item.id }
     val episodes = state.detailEpisodes
+    val resumeEpisode = remember(episodes, state.progress) {
+        episodes
+            .filter { (state.progress[itemKey(it)]?.positionMs ?: 0L) > 30_000L }
+            .maxByOrNull { state.progress[itemKey(it)]?.updatedAt ?: 0L }
+    }
     val primaryActionFocus = remember(item.id) { FocusRequester() }
     val seasons = episodes.mapNotNull { it.season }.distinct().sorted()
-    val selectedSeason = state.detailSelectedSeason ?: seasons.firstOrNull()
+    val selectedSeason = state.detailSelectedSeason ?: resumeEpisode?.season?.takeIf { it in seasons } ?: seasons.firstOrNull()
     val visibleEpisodes = if (selectedSeason == null) episodes else episodes.filter { it.season == selectedSeason }
     val detailScope = detailFocusScope(item.id, selectedSeason)
     val focusRequest = state.focusRequest?.takeIf { it.scope == detailScope }
+    val resumeIndex = visibleEpisodes.indexOfFirst { resumeEpisode != null && it.id == resumeEpisode.id }
     val targetIndex = when {
         focusRequest?.itemKey != null -> visibleEpisodes.indexOfFirst { itemKey(it) == focusRequest.itemKey }
         focusRequest?.firstItem == true -> 0
+        resumeIndex >= 0 -> resumeIndex
         else -> -1
     }
     val targetFocus = remember(detailScope, focusRequest?.itemKey, focusRequest?.firstItem) { FocusRequester() }
@@ -310,7 +317,7 @@ private fun EpisodeCard(
                     fontWeight = FontWeight.Bold,
                 )
                 Text(episode.name, color = colors.text, fontSize = 10.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                if (progress != null) Text("Resume ${formatDuration(progress.positionMs)}", color = colors.muted, fontSize = 8.sp)
+                if (progress != null) Text("▶ Continue from \${formatDuration(progress.positionMs)}", color = colors.accent, fontSize = 8.sp, fontWeight = FontWeight.Bold)
             }
             Text("▶", color = colors.accent, fontSize = 12.sp)
         }

@@ -411,32 +411,36 @@ fun PosterItemCard(
         focusRequester = focusRequester,
         onFocused = onFocused,
     ) {
-        Column(Modifier.fillMaxSize()) {
-            Box(Modifier.fillMaxWidth().weight(1f)) {
-                Artwork(item = item, modifier = Modifier.fillMaxSize(), live = false)
-                if (favorite) {
-                    Box(
-                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp),
-                    ) {
-                        TvIcon("heart", colors.danger, Modifier.size(14.dp))
-                    }
+        Box(Modifier.fillMaxSize()) {
+            Artwork(item = item, modifier = Modifier.fillMaxSize(), live = false)
+            Box(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xE6000000))))
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+            ) {
+                Column {
+                    Text(
+                        item.name,
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        item.rating?.let { "★ ${"%.1f".format(it)}" } ?: item.type.title(),
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 9.sp,
+                        maxLines = 1,
+                    )
                 }
             }
-            Column(Modifier.fillMaxWidth().padding(horizontal = 9.dp, vertical = 7.dp)) {
-                Text(
-                    item.name,
-                    color = colors.text,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    item.rating?.let { "★ ${"%.1f".format(it)}" } ?: item.type.title(),
-                    color = colors.muted,
-                    fontSize = 9.sp,
-                    maxLines = 1,
-                )
+            if (favorite) {
+                Box(modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)) {
+                    TvIcon("heart", colors.danger, Modifier.size(14.dp))
+                }
             }
         }
     }
@@ -461,7 +465,7 @@ fun Artwork(item: CatalogItem, modifier: Modifier, live: Boolean) {
                 model = item.imageUrl,
                 contentDescription = item.name,
                 modifier = Modifier.fillMaxSize().padding(if (live) 4.dp else 0.dp),
-                contentScale = ContentScale.Fit,
+                contentScale = if (live) ContentScale.Fit else ContentScale.Crop,
             )
         } else {
             Text(
