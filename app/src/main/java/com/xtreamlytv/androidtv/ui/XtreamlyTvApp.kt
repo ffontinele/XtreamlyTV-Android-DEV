@@ -1,5 +1,7 @@
 package com.xtreamlytv.androidtv.ui
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -179,6 +181,10 @@ private fun Sidebar(
         BrandLockup(iconSize = 24.dp, wordmarkSize = 16)
         Spacer(Modifier.height(20.dp))
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+            Column(
+                Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
             SidebarItem("home", "Home", screen.section() == AppSection.Home, viewModel::openHome)
             SidebarItem("tv", "Live TV", screen.section() == AppSection.Live) { viewModel.openCatalog(ContentType.LIVE) }
             SidebarItem("popcorn", "Movies", screen.section() == AppSection.Movies) { viewModel.openCatalog(ContentType.MOVIE) }
@@ -186,6 +192,7 @@ private fun Sidebar(
             SidebarItem("heart", "Favorites", screen.section() == AppSection.Favorites, viewModel::openFavorites)
             SidebarItem("settings", "Settings", screen.section() == AppSection.Settings, viewModel::openSettings)
             SidebarItem("folder", "Vídeos offline", screen.section() == AppSection.Offline) { viewModel.openOfflineVideos() }
+            }
         }
         Spacer(Modifier.weight(1f))
     }
