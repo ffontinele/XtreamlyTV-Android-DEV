@@ -209,6 +209,22 @@ fun DetailScreen(item: CatalogItem, state: AppUiState, viewModel: AppViewModel) 
                                 modifier = Modifier.width(if (progress != null) 154.dp else 100.dp),
                                 focusRequester = primaryActionFocus,
                             )
+                            if (item.type != ContentType.LIVE) {
+                                TvButton(
+                                    label = "Download",
+                                    leading = "⬇",
+                                    onClick = { viewModel.downloadVideo(item) },
+                                    modifier = Modifier.width(108.dp),
+                                    style = TvButtonStyle.Secondary,
+                                )
+                                TvButton(
+                                    label = "Link",
+                                    leading = "🔗",
+                                    onClick = { viewModel.copyStreamLink(item) },
+                                    modifier = Modifier.width(74.dp),
+                                    style = TvButtonStyle.Secondary,
+                                )
+                            }
                         }
                         TvButton(
                             label = if (favorite) "Remove favorite" else "Add favorite",
@@ -334,7 +350,9 @@ private fun EpisodeCard(
                 Text(episode.name, color = colors.text, fontSize = 10.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 if (progress != null) Text("▶ Continue from \${formatDuration(progress.positionMs)}", color = colors.accent, fontSize = 8.sp, fontWeight = FontWeight.Bold)
             }
-            Text("▶", color = colors.accent, fontSize = 12.sp)
+            Text("▶", color = colors.accent, fontSize = 12.sp, modifier = Modifier.padding(end = 4.dp))
+            Text("⬇", color = colors.muted, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 4.dp))
+            Text("🔗", color = colors.muted, fontSize = 10.sp)
         }
     }
 }

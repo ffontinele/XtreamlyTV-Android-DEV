@@ -5,6 +5,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.xtreamlytv.androidtv.data.CredentialsStore
 import com.xtreamlytv.androidtv.data.BackupManager
+import com.xtreamlytv.androidtv.data.VideoDownloader
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.widget.Toast
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import com.xtreamlytv.androidtv.data.ExportResult
 import com.xtreamlytv.androidtv.data.ImportResult
 import com.xtreamlytv.androidtv.data.LocalStateStore
@@ -103,6 +109,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
     private val backupManager by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         BackupManager(application)
+    }
+    private val downloader by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        VideoDownloader(application)
     }
     private var client: XtreamClient? = null
     private val categoryCache = LinkedHashMap<String, List<CatalogItem>>(16, 0.75f, true)
@@ -735,6 +744,45 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             kotlinx.coroutines.delay(5000)
             _state.update { it.copy(backupMessage = null) }
         }
+    }
+    
+    fun downloadVideo(item: CatalogItem) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val cred = credentialsStore.loadActive() ?: run {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(getApplication(), "Sem conta ativa", Toast.LENGTH_SHORT).show()
+                }
+                return@launch
+            }
+            val urls = StreamUrlBuilder.candidates(cred, item, state.value.settings.streamFormat)
+            val url = urls.firstOrNull() ?: run {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(getApplication(), "URL nao disponivel para este item", Toast.LENGTH_SHORT).show()
+                }
+                return@launch
+            }
+            val ext = item.containerExtension?.takeIf { it.isNotBlank() } ?: "mp4"
+            val prefix = when (item.type) {
+                ContentType.MOVIE -> "movie"
+                ContentType.EPISODE -> "ep_s" + (item.season ?: 0).toString().padStart(2, '0') + "e" + (item.episode ?: 0).toString().padStart(2, '0')
+                else -> "video"
+            }
+            val safeTitle = item.name.replace(Regex("[^a-zA-Z0-9 ]"), "").take(60).trim().replace(" ", "_").ifBlank { item.id }
+            val fileName = "${prefix}_${safeTitle}_${item.id}.${ext}"
+            downloader.enqueue(item.id, item.name, url, fileName)
+            withContext(Dispatchers.Main) {
+                Toast.makeText(getApplication(), "⬇ Download iniciado: ${item.name}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    
+    fun copyStreamLink(item: CatalogItem) {
+        val cred = credentialsStore.loadActive() ?: return
+        val urls = StreamUrlBuilder.candidates(cred, item, state.value.settings.streamFormat)
+        val url = urls.firstOrNull() ?: return
+        val clipboard = getApplication<Application>().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboard.setPrimaryClip(ClipData.newPlainText("XtreamlyTV", url))
+        Toast.makeText(getApplication(), "🔗 Link copiado: ${item.name.take(40)}", Toast.LENGTH_SHORT).show()
     }
     
     fun clearHistory() {
