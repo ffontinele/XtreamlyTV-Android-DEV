@@ -1001,7 +1001,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 val oldest = categoryCache.keys.firstOrNull { it.startsWith(prefix) } ?: break
                 categoryCache.remove(oldest)
             }
-        }
+        AppScreen.OfflineVideos -> _state.update { it.copy(screen = AppScreen.Home) }
+            }
     }
 
     private fun cacheKey(type: ContentType, categoryId: String) = "${type.name}:$categoryId"
