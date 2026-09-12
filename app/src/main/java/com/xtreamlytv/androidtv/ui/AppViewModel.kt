@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.xtreamlytv.androidtv.data.CredentialsStore
 import com.xtreamlytv.androidtv.data.BackupManager
 import com.xtreamlytv.androidtv.data.VideoDownloader
+import com.xtreamlytv.androidtv.data.StreamUrlBuilder
+import android.content.Context
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.widget.Toast
@@ -32,7 +34,6 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import javax.net.ssl.SSLHandshakeException
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.coroutineScope
