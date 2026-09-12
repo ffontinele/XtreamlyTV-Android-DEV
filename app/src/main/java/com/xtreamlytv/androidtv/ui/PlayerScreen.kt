@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -70,6 +71,9 @@ fun PlayerScreen(
     onEnded: () -> Unit,
 ) {
     val context = LocalContext.current
+    val activity = context as? Activity
+    val audioManager = remember(context) { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
+    val maxVolume = remember(audioManager) { audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) }
     val focusRequester = remember { FocusRequester() }
     var candidateIndex by remember(request.item.id) { mutableIntStateOf(0) }
     var controlsVisible by remember(request.item.id) { mutableStateOf(true) }
@@ -78,6 +82,7 @@ fun PlayerScreen(
     var duration by remember(request.item.id) { mutableLongStateOf(0L) }
     var errorMessage by remember(request.item.id) { mutableStateOf<String?>(null) }
     var seekFeedback by remember { mutableStateOf<String?>(null) }
+    var gestureIndicator by remember { mutableStateOf<String?>(null) }
 
     val player = remember(request.item.id, candidateIndex) {
         ExoPlayer.Builder(context).build().apply {
@@ -94,6 +99,12 @@ fun PlayerScreen(
         if (seekFeedback != null) {
             delay(900L)
             seekFeedback = null
+        }
+    }
+    LaunchedEffect(gestureIndicator) {
+        if (gestureIndicator != null) {
+            delay(900L)
+            gestureIndicator = null
         }
     }
     LaunchedEffect(seekFeedback) {
@@ -197,11 +208,11 @@ fun PlayerScreen(
             modifier = Modifier.fillMaxSize(),
         )
 
-        // GestureOverlay: capturas de toque acima do video
+        // GestureOverlay: toques + arrastos verticais (volume direita / brilho esquerda)
         Box(
             Modifier
                 .fillMaxSize()
-                .pointerInput(player) {
+                .pointerInput(player, maxVolume) {
                     detectTapGestures(
                         onDoubleTap = { offset ->
                             if (offset.x > size.width / 2f) {
@@ -215,6 +226,16 @@ fun PlayerScreen(
                         },
                         onTap = { if (controlsVisible) togglePlayback() else showControls() },
                     )
+                }
+                .pointerInput(maxVolume) {
+                    detectVerticalDragGestures { change, dragAmount ->
+                        val delta = -dragAmount / size.height.toFloat()
+                        if (change.position.x > size.width / 2f) {
+                            adjustVolume(delta * 1.5f)
+                        } else {
+                            adjustBrightness(delta * 1.5f)
+                        }
+                    }
                 },
         )
 
@@ -253,6 +274,17 @@ fun PlayerScreen(
                     .padding(horizontal = 22.dp, vertical = 12.dp),
             ) {
                 Text(label, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        gestureIndicator?.let { label ->
+            Box(
+                Modifier
+                    .align(Alignment.Center)
+                    .background(Color(0xB3071014), RoundedCornerShape(14.dp))
+                    .padding(horizontal = 22.dp, vertical = 12.dp),
+            ) {
+                Text(label, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
         }
 
