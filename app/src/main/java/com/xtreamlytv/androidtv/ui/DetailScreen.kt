@@ -55,10 +55,16 @@ fun DetailScreen(item: CatalogItem, state: AppUiState, viewModel: AppViewModel) 
     val progress = state.progress[itemKey(item)]
     val favorite = state.favorites.any { it.type == item.type && it.id == item.id }
     val episodes = state.detailEpisodes
+    val progressOf: (CatalogItem) -> Long = { ep ->
+        (state.progress[itemKey(ep)] ?: state.progress.entries.firstOrNull { it.key.endsWith(":" + ep.id) }?.value)?.positionMs ?: 0L
+    }
+    val updatedAtOf: (CatalogItem) -> Long = { ep ->
+        (state.progress[itemKey(ep)] ?: state.progress.entries.firstOrNull { it.key.endsWith(":" + ep.id) }?.value)?.updatedAt ?: 0L
+    }
     val resumeEpisode = remember(episodes, state.progress) {
         episodes
-            .filter { (state.progress[itemKey(it)]?.positionMs ?: 0L) > 30_000L }
-            .maxByOrNull { state.progress[itemKey(it)]?.updatedAt ?: 0L }
+            .filter { progressOf(it) > 30_000L }
+            .maxByOrNull { updatedAtOf(it) }
     }
     val primaryActionFocus = remember(item.id) { FocusRequester() }
     val seasons = episodes.mapNotNull { it.season }.distinct().sorted()
@@ -299,7 +305,7 @@ private fun EpisodeCard(
     onFocused: (() -> Unit)? = null,
 ) {
     val colors = palette()
-    val progress = state.progress[itemKey(episode)]
+    val progress = state.progress[itemKey(episode)] ?: state.progress.entries.firstOrNull { it.key.endsWith(":" + episode.id) }?.value
     TvSurface(
         modifier = Modifier.fillMaxWidth().height(cardHeight),
         onClick = { viewModel.play(episode, state.detailEpisodes) },
