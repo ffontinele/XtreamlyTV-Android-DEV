@@ -929,7 +929,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             }
             AppScreen.FavoriteGroupsManager -> openFavorites()
             is AppScreen.FavoriteGroupEditor -> openFavoriteGroupsManager()
-            is AppScreen.Catalog, AppScreen.Favorites, is AppScreen.FavoriteGroupBrowser, AppScreen.Settings -> openHome()
+            is AppScreen.Catalog, AppScreen.Favorites, is AppScreen.FavoriteGroupBrowser, AppScreen.Settings, AppScreen.OfflineVideos -> openHome()
         }
     }
 
@@ -1001,8 +1001,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 val oldest = categoryCache.keys.firstOrNull { it.startsWith(prefix) } ?: break
                 categoryCache.remove(oldest)
             }
-        AppScreen.OfflineVideos -> _state.update { it.copy(screen = AppScreen.Home) }
-            }
+        }
     }
 
     private fun cacheKey(type: ContentType, categoryId: String) = "${type.name}:$categoryId"
