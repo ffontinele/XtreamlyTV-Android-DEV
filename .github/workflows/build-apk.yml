@@ -50,8 +50,4 @@ jobs:
           body_path: RELEASE_NOTES.md
           files: app/build/outputs/apk/debug/app-debug.apk
           name: Release ${{ github.ref_name }}
-          body: |
-            Build automático do X-Drayme Android
-            - Versão: ${{ github.ref_name }}
-            - Commit: ${{ github.sha }}
           generate_release_notes: true
