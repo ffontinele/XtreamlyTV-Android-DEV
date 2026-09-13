@@ -76,7 +76,7 @@ sealed interface AppScreen {
 
 data class AppUiState(
     val backupMessage: String? = null,
-    val screen: AppScreen = AppScreen.Login,
+    val screen: AppScreen = AppScreen.Home,
     val initializing: Boolean = true,
     val loading: Boolean = false,
     val catalogsLoading: Boolean = false,
@@ -165,7 +165,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                     persist = false,
                     startup = true,
                     successScreen = AppScreen.Home,
-                    failureScreen = AppScreen.Login,
+                    failureScreen = AppScreen.Home,
                 )
             }
         }
@@ -177,7 +177,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             persist = true,
             startup = false,
             successScreen = AppScreen.Home,
-            failureScreen = AppScreen.Login,
+            failureScreen = AppScreen.Home,
         )
     }
 
@@ -298,7 +298,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun connectionFailed(error: Throwable, failureScreen: AppScreen, startup: Boolean) {
-        if (startup || failureScreen == AppScreen.Login) client = null
+        if (startup || failureScreen == AppScreen.Home) client = null
         _state.update {
             it.copy(
                 screen = failureScreen,
