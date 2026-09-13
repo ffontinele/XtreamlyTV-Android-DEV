@@ -44,3 +44,14 @@ Ou abra o APK diretamente no gerenciador de arquivos (permita instalacao de font
 ## Aviso
 
 Este app nao inclui canais, filmes ou subscrioes. Use apenas com provedores Xtream que voce tem autorizacao de acesso.
+
+## 📜 Changelog — melhorias do projeto
+
+- **v1.6.0** — Botões ◀ Ep ant. / Ep próx. ▶ no player + D-pad inteligente (↑/↓ troca episódio em séries, zapping em ao vivo)
+- **v1.5.x** — Tela "Vídeos offline" (progresso ao vivo % + MB, Tocar sem internet, Excluir) + menu lateral rolável
+- **v1.4.x** — Download de vídeos (`Documents/XtreamlyTV/Downloads/`) + botão Copiar link + botões 44dp nos episódios
+- **v1.3.x** — Backup & Restauração de contas (`Documents/XtreamlyTV/backup.xtreamly`)
+- **v1.1.x/v1.2.x** — Continue SxEy, resume de filmes, volume contínuo, double-tap ±30s, gestos, CI 1 build por tag
+- **Base** — 5 temas, favoritos com grupos, busca/histórico locais, sem analytics e sem anúncios
+
+📄 Changelog completo e detalhado: [CHANGELOG.md](CHANGELOG.md)
