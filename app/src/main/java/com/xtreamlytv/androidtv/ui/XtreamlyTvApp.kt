@@ -94,8 +94,8 @@ fun XtreamlyTvApp(
                             request = screen.request,
                             favorite = viewModel.isFavorite(screen.request.item),
                             onBack = viewModel::back,
-                            onPrevious = { viewModel.playAdjacent(-1) },
-                            onNext = { viewModel.playAdjacent(1) },
+                            onPrevious = { if (screen.request.item.type == ContentType.LIVE) viewModel.playAdjacent(-1) else viewModel.playAdjacentInQueue(-1) },
+                            onNext = { if (screen.request.item.type == ContentType.LIVE) viewModel.playAdjacent(1) else viewModel.playAdjacentInQueue(1) },
                             onToggleFavorite = { viewModel.toggleFavorite(screen.request.item) },
                             onProgress = { position, duration ->
                                 viewModel.savePlaybackProgress(screen.request.item, position, duration)

@@ -826,6 +826,27 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         downloader.cancel(id)
     }
 
+    fun playAdjacentInQueue(delta: Int) {
+        val current = _state.value.screen as? AppScreen.Player ?: return
+        val queue = current.request.queue
+        if (queue.size < 2) return
+        val idx = queue.indexOfFirst { it.id == current.request.item.id }
+        if (idx < 0) return
+        val target = idx + delta
+        if (target !in queue.indices) return
+        val api = client ?: return
+        val item = queue[target]
+        val progress = _state.value.progress[itemKey(item)]
+        val request = PlayerRequest(
+            item = item,
+            queue = queue,
+            urlCandidates = api.streamCandidates(item, _state.value.settings.streamFormat),
+            startPositionMs = progress?.positionMs ?: 0L,
+        )
+        addRecent(item)
+        _state.update { it.copy(screen = AppScreen.Player(request, current.origin, current.returnFocus), error = null, focusRequest = null) }
+    }
+
     fun clearHistory() {
         _state.update { it.copy(recent = emptyList(), progress = emptyMap(), error = null) }
         viewModelScope.launch(Dispatchers.IO) { localStateStore.clearHistory() }

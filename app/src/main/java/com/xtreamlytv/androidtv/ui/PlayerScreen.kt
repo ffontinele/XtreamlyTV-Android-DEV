@@ -284,6 +284,8 @@ fun PlayerScreen(
                 onSeekForward = { player.seekTo(player.currentPosition + 30_000L); showControls() },
                 onToggleFavorite = { onToggleFavorite(); showControls() },
                 onSeekFraction = { frac -> player.seekTo((frac.coerceIn(0f, 1f) * duration).toLong()); showControls() },
+                onPreviousEpisode = { onPrevious(); showControls() },
+                onNextEpisode = { onNext(); showControls() },
             )
         }
 
@@ -357,6 +359,8 @@ private fun PlayerControls(
     onSeekForward: () -> Unit = {},
     onToggleFavorite: () -> Unit = {},
     onSeekFraction: (Float) -> Unit = {},
+    onPreviousEpisode: () -> Unit = {},
+    onNextEpisode: () -> Unit = {},
 ) {
     val colors = palette()
     Column(
@@ -415,6 +419,10 @@ private fun PlayerControls(
                 Text("↑/↓ Change channel", color = colors.muted, fontSize = 9.sp)
             } else {
                 Text("${formatDuration(position)} / ${formatDuration(duration)}", color = colors.muted, fontSize = 9.sp)
+            }
+            if (request.item.type != ContentType.LIVE && request.queue.size > 1) {
+                Text("◀ Ep ant.", color = colors.accent, fontSize = 9.sp, modifier = Modifier.clickable { onPreviousEpisode() }.padding(6.dp))
+                Text("Ep próx. ▶", color = colors.accent, fontSize = 9.sp, modifier = Modifier.clickable { onNextEpisode() }.padding(6.dp))
             }
         }
     }
