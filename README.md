@@ -1,4 +1,4 @@
-# XtreamlyTV Android APK — X-Drayme Edition
+# XtreamlyTV Android APK — XtreamlyTV Edition
 
 Versao Android (TV Box + celular) do XtreamlyTV, empacotada automaticamente pelo GitHub Actions.
 
