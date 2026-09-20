@@ -1,0 +1,29 @@
+R_DEF: Internal format may change without notice
+local
+color xtreamlytv_icon_background
+drawable ic_folder
+drawable ic_heart
+drawable ic_home
+drawable ic_play_box
+drawable ic_plus
+drawable ic_popcorn
+drawable ic_search
+drawable ic_settings
+drawable ic_smile
+drawable ic_star
+drawable ic_trophy
+drawable ic_tv
+drawable launch_background
+drawable xtreamlytv_foreground
+drawable xtreamlytv_icon_foreground
+drawable xtreamlytv_mark
+drawable xtreamlytv_mark_baseline
+drawable xtreamlytv_mark_vector
+drawable xtreamlytv_wordmark
+drawable xtreamlytv_wordmark_baseline
+mipmap ic_launcher
+mipmap tv_banner
+string app_description
+string app_name
+style Theme.XtreamlyTV
+style Theme.XtreamlyTV.Starting

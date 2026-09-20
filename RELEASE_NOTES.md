@@ -1,3 +1,11 @@
+# 🏁 XtreamlyTV Android — v1.6.2
+
+## O que mudou nesta versão
+- **QR Code Cloud Sync agora aponta para o painel dedicado** `ffontinele.github.io/zui-sync/` (mesma base usada pelo app webOS v0.7.1+).
+- Painel antigo (`ZUI_IPTV_Player_portugues/painel_web`) foi substituído; ao escanear o QR do app, abre direto o novo painel web.
+- **Limpeza de versão interna**: `versionName` atualizado de 0.8.0 para 1.6.2 (alinhado com as releases do GitHub).
+- Mantido: abertura direta na Home na primeira instalação; falha de conexão cai na Home com aviso; ◀ Ep ant. / Ep próx. ▶ no player.
+
 # 🏁 XtreamlyTV — v1.6.1
 
 ## O que mudou nesta versão

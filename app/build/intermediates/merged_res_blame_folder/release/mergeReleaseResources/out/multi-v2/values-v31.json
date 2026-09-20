@@ -1,0 +1,39 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.xtreamlytv.androidtv.app-mergeReleaseResources-40:/values-v31/values-v31.xml",
+            "map": [
+                {
+                    "source": "/root/.gradle/caches/8.14.3/transforms/604cbaa86f7c8a02cef3dc6ef8318318/transformed/core-splashscreen-1.0.1/res/values-v31/values-v31.xml",
+                    "from": {
+                        "startLines": "2,9",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,473",
+                        "endLines": "8,13",
+                        "endColumns": "12,12",
+                        "endOffsets": "468,697"
+                    }
+                },
+                {
+                    "source": "/root/xtreamly/xtreamly-android/app/src/main/res/values-v31/themes.xml",
+                    "from": {
+                        "startLines": "1",
+                        "startColumns": "4",
+                        "startOffsets": "16",
+                        "endLines": "10",
+                        "endColumns": "12",
+                        "endOffsets": "687"
+                    },
+                    "to": {
+                        "startLines": "14",
+                        "startColumns": "4",
+                        "startOffsets": "702",
+                        "endLines": "23",
+                        "endColumns": "12",
+                        "endOffsets": "1373"
+                    }
+                }
+            ]
+        }
+    ]
+}

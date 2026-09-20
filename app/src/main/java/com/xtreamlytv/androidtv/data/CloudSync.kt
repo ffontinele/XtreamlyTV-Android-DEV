@@ -49,7 +49,7 @@ object CloudSync {
     fun getQrUrl(context: Context): String {
         val id = getDeviceId(context)
         val key = getDeviceKey(context)
-        return "https://ffontinele.github.io/ZUI_IPTV_Player_portugues/painel_web/?id=" +
+        return "https://ffontinele.github.io/zui-sync/?id=" +
             java.net.URLEncoder.encode(id, "UTF-8") +
             "&key=" + java.net.URLEncoder.encode(key, "UTF-8")
     }

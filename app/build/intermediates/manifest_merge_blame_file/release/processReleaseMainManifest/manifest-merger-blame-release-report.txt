@@ -1,0 +1,165 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.github.xtreamlytv.androidtv"
+4    android:versionCode="801"
+5    android:versionName="0.8.1" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="23"
+9        android:targetSdkVersion="36" />
+10
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:3:5-67
+11-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:3:22-64
+12    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+12-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:4:5-80
+12-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:4:22-77
+13    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+13-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:5:5-81
+13-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:5:22-78
+14    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+14-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:6:5-82
+14-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:6:22-79
+15
+16    <uses-feature
+16-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:7:5-87
+17        android:name="android.software.leanback"
+17-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:7:19-59
+18        android:required="false" />
+18-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:7:60-84
+19    <uses-feature
+19-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:8:5-90
+20        android:name="android.hardware.touchscreen"
+20-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:8:19-62
+21        android:required="false" />
+21-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:8:63-87
+22
+23    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+23-->[androidx.media3:media3-common:1.8.0] /root/.gradle/caches/8.14.3/transforms/78acfdf10f4e20972591e30aff111a62/transformed/media3-common-1.8.0/AndroidManifest.xml:22:5-79
+23-->[androidx.media3:media3-common:1.8.0] /root/.gradle/caches/8.14.3/transforms/78acfdf10f4e20972591e30aff111a62/transformed/media3-common-1.8.0/AndroidManifest.xml:22:22-76
+24
+25    <permission
+25-->[androidx.core:core:1.15.0] /root/.gradle/caches/8.14.3/transforms/76f9e6a114a2b009ba7c63aca58866f2/transformed/core-1.15.0/AndroidManifest.xml:22:5-24:47
+26        android:name="com.github.xtreamlytv.androidtv.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+26-->[androidx.core:core:1.15.0] /root/.gradle/caches/8.14.3/transforms/76f9e6a114a2b009ba7c63aca58866f2/transformed/core-1.15.0/AndroidManifest.xml:23:9-81
+27        android:protectionLevel="signature" />
+27-->[androidx.core:core:1.15.0] /root/.gradle/caches/8.14.3/transforms/76f9e6a114a2b009ba7c63aca58866f2/transformed/core-1.15.0/AndroidManifest.xml:24:9-44
+28
+29    <uses-permission android:name="com.github.xtreamlytv.androidtv.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+29-->[androidx.core:core:1.15.0] /root/.gradle/caches/8.14.3/transforms/76f9e6a114a2b009ba7c63aca58866f2/transformed/core-1.15.0/AndroidManifest.xml:26:5-97
+29-->[androidx.core:core:1.15.0] /root/.gradle/caches/8.14.3/transforms/76f9e6a114a2b009ba7c63aca58866f2/transformed/core-1.15.0/AndroidManifest.xml:26:22-94
+30
+31    <application
+31-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:10:5-30:19
+32        android:allowBackup="false"
+32-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:11:9-36
+33        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+33-->[androidx.core:core:1.15.0] /root/.gradle/caches/8.14.3/transforms/76f9e6a114a2b009ba7c63aca58866f2/transformed/core-1.15.0/AndroidManifest.xml:28:18-86
+34        android:banner="@mipmap/tv_banner"
+34-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:12:9-43
+35        android:extractNativeLibs="false"
+36        android:icon="@mipmap/ic_launcher"
+36-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:13:9-43
+37        android:label="@string/app_name"
+37-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:14:9-41
+38        android:supportsRtl="true"
+38-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:15:9-35
+39        android:theme="@style/Theme.XtreamlyTV"
+39-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:16:9-48
+40        android:usesCleartextTraffic="true" >
+40-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:17:9-44
+41        <activity
+41-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:18:9-29:20
+42            android:name="com.xtreamlytv.androidtv.MainActivity"
+42-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:19:13-41
+43            android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
+43-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:20:13-133
+44            android:exported="true"
+44-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:21:13-36
+45            android:screenOrientation="landscape"
+45-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:22:13-50
+46            android:theme="@style/Theme.XtreamlyTV.Starting" >
+46-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:23:13-61
+47            <intent-filter>
+47-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:24:13-28:29
+48                <action android:name="android.intent.action.MAIN" />
+48-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:25:17-69
+48-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:25:25-66
+49
+50                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+50-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:26:17-86
+50-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:26:27-83
+51                <category android:name="android.intent.category.LAUNCHER" />
+51-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:27:17-77
+51-->/root/xtreamly/xtreamly-android/app/src/main/AndroidManifest.xml:27:27-74
+52            </intent-filter>
+53        </activity>
+54
+55        <provider
+55-->[androidx.emoji2:emoji2:1.4.0] /root/.gradle/caches/8.14.3/transforms/57f489920b331904bd92b1ff9bf3520f/transformed/emoji2-1.4.0/AndroidManifest.xml:24:9-32:20
+56            android:name="androidx.startup.InitializationProvider"
+56-->[androidx.emoji2:emoji2:1.4.0] /root/.gradle/caches/8.14.3/transforms/57f489920b331904bd92b1ff9bf3520f/transformed/emoji2-1.4.0/AndroidManifest.xml:25:13-67
+57            android:authorities="com.github.xtreamlytv.androidtv.androidx-startup"
+57-->[androidx.emoji2:emoji2:1.4.0] /root/.gradle/caches/8.14.3/transforms/57f489920b331904bd92b1ff9bf3520f/transformed/emoji2-1.4.0/AndroidManifest.xml:26:13-68
+58            android:exported="false" >
+58-->[androidx.emoji2:emoji2:1.4.0] /root/.gradle/caches/8.14.3/transforms/57f489920b331904bd92b1ff9bf3520f/transformed/emoji2-1.4.0/AndroidManifest.xml:27:13-37
+59            <meta-data
+59-->[androidx.emoji2:emoji2:1.4.0] /root/.gradle/caches/8.14.3/transforms/57f489920b331904bd92b1ff9bf3520f/transformed/emoji2-1.4.0/AndroidManifest.xml:29:13-31:52
+60                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+60-->[androidx.emoji2:emoji2:1.4.0] /root/.gradle/caches/8.14.3/transforms/57f489920b331904bd92b1ff9bf3520f/transformed/emoji2-1.4.0/AndroidManifest.xml:30:17-75
+61                android:value="androidx.startup" />
+61-->[androidx.emoji2:emoji2:1.4.0] /root/.gradle/caches/8.14.3/transforms/57f489920b331904bd92b1ff9bf3520f/transformed/emoji2-1.4.0/AndroidManifest.xml:31:17-49
+62            <meta-data
+62-->[androidx.lifecycle:lifecycle-process:2.9.2] /root/.gradle/caches/8.14.3/transforms/9fac548b942bc78de6c023aeae16db9f/transformed/lifecycle-process-2.9.2/AndroidManifest.xml:29:13-31:52
+63                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+63-->[androidx.lifecycle:lifecycle-process:2.9.2] /root/.gradle/caches/8.14.3/transforms/9fac548b942bc78de6c023aeae16db9f/transformed/lifecycle-process-2.9.2/AndroidManifest.xml:30:17-78
+64                android:value="androidx.startup" />
+64-->[androidx.lifecycle:lifecycle-process:2.9.2] /root/.gradle/caches/8.14.3/transforms/9fac548b942bc78de6c023aeae16db9f/transformed/lifecycle-process-2.9.2/AndroidManifest.xml:31:17-49
+65            <meta-data
+65-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:29:13-31:52
+66                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+66-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:30:17-85
+67                android:value="androidx.startup" />
+67-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:31:17-49
+68        </provider>
+69
+70        <receiver
+70-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:34:9-52:20
+71            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+71-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:35:13-76
+72            android:directBootAware="false"
+72-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:36:13-44
+73            android:enabled="true"
+73-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:37:13-35
+74            android:exported="true"
+74-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:38:13-36
+75            android:permission="android.permission.DUMP" >
+75-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:39:13-57
+76            <intent-filter>
+76-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:40:13-42:29
+77                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+77-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:41:17-91
+77-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:41:25-88
+78            </intent-filter>
+79            <intent-filter>
+79-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:43:13-45:29
+80                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+80-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:44:17-85
+80-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:44:25-82
+81            </intent-filter>
+82            <intent-filter>
+82-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:46:13-48:29
+83                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+83-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:47:17-88
+83-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:47:25-85
+84            </intent-filter>
+85            <intent-filter>
+85-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:49:13-51:29
+86                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+86-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:50:17-95
+86-->[androidx.profileinstaller:profileinstaller:1.4.1] /root/.gradle/caches/8.14.3/transforms/165b4836587cf74418016f2cc01a7552/transformed/profileinstaller-1.4.1/AndroidManifest.xml:50:25-92
+87            </intent-filter>
+88        </receiver>
+89    </application>
+90
+91</manifest>
