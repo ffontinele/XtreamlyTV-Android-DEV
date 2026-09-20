@@ -1,3 +1,19 @@
+# 🏁 XtreamlyTV Android — v1.6.3
+
+## ✨ Novidades
+
+- **Botão "Validade" no card de provedores**: consulta o provedor em tempo real e mostra:
+  - "Expira em dd/mm/aaaa · faltam X dias" (verde)
+  - "Expira em dd/mm/aaaa · há X dias (EXPIRADA)" (vermelho)
+  - "Conta ativa · sem data de expiração" (para listas ilimitadas)
+- **QR Code gigante e nítido**: o QR agora ocupa quase todo o diálogo de adicionar provedor, com módulos desenhados pixel-perfect e ECC alto (ErrorCorrectionLevel.H) — leitura muito mais confiável pelo celular.
+- **Mensagem do QR em português**: "Adicionar provedor via QR Code · Escaneie com o celular para enviar uma lista pra TV".
+
+## Já incluído nas versões anteriores
+- **v1.6.2:** QR migrado para `zui-sync` + versionName alinhado.
+- **v1.6.1:** conta expirada/404 cai na Home com aviso (nunca mais trava no login).
+- **v1.6.0:** botões ◀ Ep ant. / Ep próx. ▶ no player + D-pad inteligente.
+
 # 🏁 XtreamlyTV Android — v1.6.2
 
 ## O que mudou nesta versão

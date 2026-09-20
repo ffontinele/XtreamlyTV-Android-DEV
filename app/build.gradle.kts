@@ -22,8 +22,8 @@ android {
         applicationId = "com.github.xtreamlytv.androidtv"
         minSdk = 23
         targetSdk = 36
-        versionCode = 1602
-        versionName = "1.6.2"
+        versionCode = 1603
+        versionName = "1.6.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

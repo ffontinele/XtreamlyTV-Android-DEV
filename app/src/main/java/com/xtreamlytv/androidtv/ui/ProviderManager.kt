@@ -29,6 +29,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import com.xtreamlytv.androidtv.data.XtreamClient
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -49,6 +60,7 @@ fun ProviderManagerCard(state: AppUiState, viewModel: AppViewModel) {
     var addingProvider by remember { mutableStateOf(false) }
     var editingProviderId by remember { mutableStateOf<String?>(null) }
     var deleteConfirmId by remember { mutableStateOf<String?>(null) }
+    var validityCheckId by remember { mutableStateOf<String?>(null) }
     var showQr by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -81,6 +93,7 @@ fun ProviderManagerCard(state: AppUiState, viewModel: AppViewModel) {
                         onTogglePassword = { showPassword = !showPassword },
                         onUse = { viewModel.useProvider(cred.id) },
                         onEdit = { editingProviderId = cred.id },
+                        onValidity = { validityCheckId = cred.id },
                         onDelete = { deleteConfirmId = cred.id },
                     )
                 }
@@ -94,6 +107,14 @@ fun ProviderManagerCard(state: AppUiState, viewModel: AppViewModel) {
         }
         if (showQr) {
             QrDialog(url = CloudSync.getQrUrl(context), onDismiss = { showQr = false })
+        }
+        validityCheckId?.let { vid ->
+            val vcred = providers.find { it.id == vid }
+            if (vcred != null) {
+                ValidityDialog(cred = vcred, onDismiss = { validityCheckId = null })
+            } else {
+                validityCheckId = null
+            }
         }
         if (addingProvider) {
             ProviderEditDialog(
@@ -145,6 +166,7 @@ private fun ProviderRow(
     onTogglePassword: () -> Unit,
     onUse: () -> Unit,
     onEdit: () -> Unit,
+    onValidity: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val colors = palette()
@@ -182,6 +204,7 @@ private fun ProviderRow(
             TvButton("Use", onUse, Modifier.width(64.dp), TvButtonStyle.Primary)
             TvButton("Edit", onEdit, Modifier.width(64.dp), TvButtonStyle.Secondary)
             TvButton(if (showPassword) "Hide" else "Show", onTogglePassword, Modifier.width(84.dp), TvButtonStyle.Secondary)
+            TvButton("Validade", onValidity, Modifier.width(92.dp), TvButtonStyle.Secondary)
             TvButton("Delete", onDelete, Modifier.width(88.dp), TvButtonStyle.Danger)
         }
     }
@@ -224,6 +247,79 @@ private fun ProviderEditDialog(
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 TvButton("Save", { onConfirm(name, Credentials(server = server, username = username, password = password)) }, Modifier.width(110.dp))
                 TvButton("Cancel", onDismiss, Modifier.width(110.dp), TvButtonStyle.Secondary)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ValidityDialog(
+    cred: Credentials,
+    onDismiss: () -> Unit,
+) {
+    val colors = palette()
+    var statusText by remember(cred.id) { mutableStateOf("Consultando o provedor...") }
+    var statusColor by remember(cred.id) { mutableStateOf(colors.muted) }
+
+    LaunchedEffect(cred.id) {
+        withContext(Dispatchers.IO) {
+            try {
+                val summary = XtreamClient(cred).authenticate()
+                val exp = summary.expiration
+                if (exp.isNullOrBlank() || exp == "0" || exp.toLongOrNull() == 0L) {
+                    statusText = "Conta ativa · sem data de expiração"
+                    statusColor = colors.accent
+                } else {
+                    val expDate = LocalDateTime.ofInstant(
+                        Instant.ofEpochSecond(exp.toLong()),
+                        ZoneId.systemDefault(),
+                    )
+                    val now = LocalDateTime.now()
+                    val days = ChronoUnit.DAYS.between(now.toLocalDate(), expDate.toLocalDate())
+                    val fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+                    val quando = when {
+                        days > 1 -> "faltam $days dias"
+                        days == 1L -> "falta 1 dia"
+                        days == 0L -> "hoje"
+                        days == -1L -> "ontem (EXPIRADA)"
+                        else -> "há ${-days} dias (EXPIRADA)"
+                    }
+                    statusText = "Expira em ${expDate.format(fmt)}\n$quando"
+                    statusColor = if (days >= 0) colors.accent else Color(0xFFE87968)
+                }
+            } catch (e: Exception) {
+                statusText = "Erro ao consultar: ${(e.message ?: "desconhecido").take(80)}"
+                statusColor = Color(0xFFE87968)
+            }
+        }
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .width(460.dp)
+                .background(colors.panelStrong.copy(alpha = 0.97f), RoundedCornerShape(18.dp))
+                .border(1.dp, Color.White.copy(alpha = 0.09f), RoundedCornerShape(18.dp))
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text("Validade da conta", color = colors.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "${cred.name} · ${cred.username}",
+                color = colors.muted,
+                fontSize = 12.sp,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                statusText,
+                color = statusColor,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                lineHeight = 22.sp,
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                TvButton("Fechar", onDismiss, Modifier.width(120.dp), TvButtonStyle.Secondary)
             }
         }
     }
