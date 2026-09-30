@@ -19,7 +19,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.github.xtreamlytv.androidtv"
+        applicationId = "com.github.xtreamlytv.androidtv.dev"
         minSdk = 23
         targetSdk = 36
         versionCode = 1603
