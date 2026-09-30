@@ -2,6 +2,7 @@ package com.xtreamlytv.androidtv.ui
 import android.app.Activity
 import android.content.Context
 import android.media.AudioManager
+import android.widget.Toast
 
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -13,6 +14,8 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,6 +58,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.C
+import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.Tracks
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
@@ -89,6 +95,13 @@ fun PlayerScreen(
     var gestureIndicator by remember { mutableStateOf<String?>(null) }
     var volumeFraction by remember { mutableFloatStateOf(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / maxVolume.toFloat()) }
     var lastVolumeInt by remember { mutableIntStateOf(audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)) }
+    var trackGroups by remember(request.item.id) { mutableStateOf<Tracks?>(null) }
+    var showAudioPanel by remember { mutableStateOf(false) }
+    var showSubPanel by remember { mutableStateOf(false) }
+    var autoApplied by remember(request.item.id) { mutableStateOf(false) }
+    val allGroups = trackGroups?.groups ?: emptyList<Tracks.Group>()
+    val audioGroups = allGroups.filter { it.type == C.TRACK_TYPE_AUDIO }
+    val subGroups = allGroups.filter { it.type == C.TRACK_TYPE_TEXT }
 
     val player = remember(request.item.id, candidateIndex) {
         ExoPlayer.Builder(context).build().apply {
@@ -135,6 +148,14 @@ fun PlayerScreen(
 
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_ENDED) onEnded()
+            }
+
+            override fun onTracksChanged(tracks: Tracks) {
+                trackGroups = tracks
+                if (!autoApplied) {
+                    autoApplied = true
+                    applyPreferredTracks(player, tracks, context)
+                }
             }
 
             override fun onPlayerError(error: PlaybackException) {
@@ -214,6 +235,13 @@ fun PlayerScreen(
             .focusRequester(focusRequester)
             .onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                if (showAudioPanel || showSubPanel) {
+                    if (event.key == Key.Back) {
+                        showAudioPanel = false
+                        showSubPanel = false
+                    }
+                    return@onPreviewKeyEvent true
+                }
                 when (event.key) {
                     Key.DirectionCenter, Key.Enter, Key.MediaPlayPause -> { togglePlayback(); true }
                     Key.DirectionLeft -> { player.seekTo((player.currentPosition - 30_000L).coerceAtLeast(0L)); showControls(); true }
@@ -286,6 +314,27 @@ fun PlayerScreen(
                 onSeekFraction = { frac -> player.seekTo((frac.coerceIn(0f, 1f) * duration).toLong()); showControls() },
                 onPreviousEpisode = { onPrevious(); showControls() },
                 onNextEpisode = { onNext(); showControls() },
+                hasAudio = audioGroups.isNotEmpty(),
+                hasSubs = subGroups.isNotEmpty(),
+                onOpenAudio = { showAudioPanel = true; controlsVisible = true },
+                onOpenSubs = { showSubPanel = true; controlsVisible = true },
+            )
+        }
+
+        if (showAudioPanel || showSubPanel) {
+            val forSubs = showSubPanel
+            val groups = if (forSubs) subGroups else audioGroups
+            val type = if (forSubs) C.TRACK_TYPE_TEXT else C.TRACK_TYPE_AUDIO
+            val data = buildTrackRows(player, groups, type)
+            TrackPanelOverlay(
+                title = if (forSubs) "Faixas de Legendas" else "Faixas de Áudio",
+                rows = data.rows,
+                onDismiss = { showAudioPanel = false; showSubPanel = false },
+                onRowClick = { i ->
+                    handleTrackRowClick(i, data, player, groups, type, context)
+                    showAudioPanel = false
+                    showSubPanel = false
+                },
             )
         }
 
@@ -361,6 +410,10 @@ private fun PlayerControls(
     onSeekFraction: (Float) -> Unit = {},
     onPreviousEpisode: () -> Unit = {},
     onNextEpisode: () -> Unit = {},
+    hasAudio: Boolean = false,
+    hasSubs: Boolean = false,
+    onOpenAudio: () -> Unit = {},
+    onOpenSubs: () -> Unit = {},
 ) {
     val colors = palette()
     Column(
@@ -415,6 +468,8 @@ private fun PlayerControls(
             Text(if (playing) "OK Pause" else "OK Play", color = colors.text, fontSize = 10.sp, modifier = Modifier.clickable { onTogglePlay() }.padding(6.dp))
             Text("30s →", color = colors.muted, fontSize = 9.sp, modifier = Modifier.clickable { onSeekForward() }.padding(6.dp))
             Text("MENU ${if (favorite) "Unfavorite" else "Favorite"}", color = colors.muted, fontSize = 9.sp, modifier = Modifier.clickable { onToggleFavorite() }.padding(6.dp))
+            if (hasAudio) Text("Aa", color = colors.accent, fontSize = 10.sp, modifier = Modifier.clickable { onOpenAudio() }.padding(6.dp))
+            if (hasSubs) Text("CC", color = colors.accent, fontSize = 10.sp, modifier = Modifier.clickable { onOpenSubs() }.padding(6.dp))
             if (request.item.type == ContentType.LIVE) {
                 Text("↑/↓ Change channel", color = colors.muted, fontSize = 9.sp)
             } else {
@@ -423,6 +478,228 @@ private fun PlayerControls(
             if (request.item.type != ContentType.LIVE && request.queue.size > 1) {
                 Text("◀ Ep ant.", color = colors.accent, fontSize = 9.sp, modifier = Modifier.clickable { onPreviousEpisode() }.padding(6.dp))
                 Text("Ep próx. ▶", color = colors.accent, fontSize = 9.sp, modifier = Modifier.clickable { onNextEpisode() }.padding(6.dp))
+            }
+        }
+    }
+}
+
+// ================= SELETOR DE TRILHAS (Fase 1) =================
+
+private data class TrackRows(
+    val rows: List<Pair<String, Boolean>>,
+    val map: List<Pair<Int, Int>>,
+)
+
+private val LANG_NAMES = mapOf(
+    "en" to "English", "en-us" to "English (US)", "en-gb" to "English (UK)",
+    "ja" to "Japanese", "pt" to "Portuguese",
+    "pt-br" to "Portuguese (Brazil)", "pt-pt" to "Portuguese (Portugal)",
+    "es" to "Spanish", "es-419" to "Spanish (Latin America)", "es-mx" to "Spanish (Mexico)",
+    "fr" to "French", "fr-ca" to "French (Canada)", "de" to "German", "it" to "Italian",
+    "ru" to "Russian", "ko" to "Korean", "zh" to "Chinese",
+    "zh-cn" to "Chinese (Simplified)", "zh-tw" to "Chinese (Traditional)",
+    "ar" to "Arabic", "tr" to "Turkish", "pl" to "Polish", "ms" to "Malay",
+    "id" to "Indonesian", "th" to "Thai", "vi" to "Vietnamese", "hi" to "Hindi",
+    "nl" to "Dutch", "sv" to "Swedish", "no" to "Norwegian", "da" to "Danish",
+    "fi" to "Finnish", "el" to "Greek", "he" to "Hebrew", "fa" to "Persian",
+    "uk" to "Ukrainian", "cs" to "Czech", "hu" to "Hungarian", "ro" to "Romanian",
+    "bg" to "Bulgarian", "hr" to "Croatian", "sr" to "Serbian", "sk" to "Slovak",
+    "ca" to "Catalan", "fil" to "Filipino", "bn" to "Bengali", "ta" to "Tamil",
+    "te" to "Telugu", "ur" to "Urdu", "sw" to "Swahili", "af" to "Afrikaans",
+    "sq" to "Albanian", "et" to "Estonian", "lv" to "Latvian", "lt" to "Lithuanian",
+    "sl" to "Slovenian", "mk" to "Macedonian", "is" to "Icelandic"
+)
+
+private val ISO3 = mapOf(
+    "por" to "pt", "eng" to "en", "spa" to "es", "fre" to "fr", "fra" to "fr",
+    "ger" to "de", "deu" to "de", "jpn" to "ja", "kor" to "ko", "rus" to "ru",
+    "ita" to "it", "chi" to "zh", "zho" to "zh", "pol" to "pl", "may" to "ms",
+    "msa" to "ms", "ind" to "id", "tha" to "th", "vie" to "vi", "hin" to "hi",
+    "tur" to "tr", "ara" to "ar", "ukr" to "uk", "cze" to "cs", "ces" to "cs",
+    "hun" to "hu", "ron" to "ro", "rum" to "ro", "bul" to "bg", "hrv" to "hr",
+    "srp" to "sr", "slk" to "sk", "slo" to "sl", "cat" to "ca", "nld" to "nl",
+    "dut" to "nl", "swe" to "sv", "nor" to "no", "dan" to "da", "fin" to "fi",
+    "ell" to "el", "gre" to "el", "heb" to "he", "fas" to "fa", "per" to "fa",
+    "tgl" to "fil", "fil" to "fil"
+)
+
+private fun langKey(lang: String?): String? {
+    val l = lang?.lowercase()?.replace("_", "-") ?: return null
+    val base = l.substringBefore('-')
+    val two = ISO3[base] ?: base
+    val region = l.substringAfter('-', "")
+    return if (region.isEmpty()) two else "$two-$region"
+}
+
+private fun langName(code: String): String? {
+    LANG_NAMES[code]?.let { return it }
+    val base = code.substringBefore('-')
+    val region = code.substringAfter('-', "").uppercase()
+    val baseName = LANG_NAMES[base] ?: return null
+    return if (region.isEmpty()) baseName else "$baseName ($region)"
+}
+
+private fun score(key: String?, wanted: String): Int {
+    if (key == null) return -1
+    return if (wanted == "pt") when {
+        key == "pt-br" -> 3
+        key == "pt" -> 2
+        key.startsWith("pt-") -> 1
+        else -> -1
+    } else when {
+        key == wanted -> 2
+        key.startsWith("$wanted-") -> 1
+        else -> -1
+    }
+}
+
+private fun keyFor(type: Int) = if (type == C.TRACK_TYPE_AUDIO) "audio_lang" else "sub_lang"
+
+private fun setDisabled(player: Player, type: Int, disabled: Boolean) {
+    player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
+        .setTrackTypeDisabled(type, disabled)
+        .build()
+}
+
+private fun selectTrackAt(player: Player, groups: List<Tracks.Group>, gi: Int, ti: Int, type: Int) {
+    val g = groups[gi]
+    val override = TrackSelectionOverride(g.mediaTrackGroup, listOf(ti))
+    player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
+        .setTrackTypeDisabled(type, false)
+        .clearOverridesOfType(type)
+        .addOverride(override)
+        .build()
+}
+
+private fun selectPreferred(player: Player, groups: List<Tracks.Group>, type: Int, wanted: String): Boolean {
+    var best = 0
+    var bg = -1
+    var bt = -1
+    groups.forEachIndexed { gi, g ->
+        for (ti in 0 until g.length) {
+            val sc = score(langKey(g.getTrackFormat(ti).language), wanted)
+            if (sc > best) { best = sc; bg = gi; bt = ti }
+        }
+    }
+    if (bg < 0) return false
+    selectTrackAt(player, groups, bg, bt, type)
+    return true
+}
+
+private fun applyPreferredTracks(player: Player, tracks: Tracks, context: Context) {
+    val prefs = context.getSharedPreferences("xui_track_prefs", 0)
+    val audioGroups = tracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }
+    val subGroups = tracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }
+    when (val a = prefs.getString("audio_lang", "pt")) {
+        "none" -> setDisabled(player, C.TRACK_TYPE_AUDIO, true)
+        else -> selectPreferred(player, audioGroups, C.TRACK_TYPE_AUDIO, a!!)
+    }
+    when (val s = prefs.getString("sub_lang", "pt")) {
+        "none" -> setDisabled(player, C.TRACK_TYPE_TEXT, true)
+        else -> if (!selectPreferred(player, subGroups, C.TRACK_TYPE_TEXT, s!!)) {
+            setDisabled(player, C.TRACK_TYPE_TEXT, true)
+        }
+    }
+}
+
+private fun buildTrackRows(player: Player, groups: List<Tracks.Group>, type: Int): TrackRows {
+    val rows = mutableListOf<Pair<String, Boolean>>()
+    val map = mutableListOf<Pair<Int, Int>>()
+    val disabled = player.trackSelectionParameters.disabledTrackTypes.contains(type)
+    var ptSelected = false
+    groups.forEach { g ->
+        for (ti in 0 until g.length) {
+            if (g.isTrackSelected(ti) && score(langKey(g.getTrackFormat(ti).language), "pt") > 0) ptSelected = true
+        }
+    }
+    rows.add("★  Padrão (Português)" to ptSelected)
+    rows.add("Disable" to disabled)
+    val counts = mutableMapOf<String, Int>()
+    groups.forEachIndexed { gi, g ->
+        for (ti in 0 until g.length) {
+            val f = g.getTrackFormat(ti)
+            val lang = f.language?.takeIf { it.isNotBlank() && it != "und" }?.lowercase()
+            val ln = lang?.let { langName(it) }
+            val fallback = if (type == C.TRACK_TYPE_TEXT) "Legenda" else "Áudio"
+            var base = f.label?.takeIf { it.isNotBlank() } ?: ln ?: fallback
+            val key = base.lowercase()
+            val n = (counts[key] ?: 0) + 1
+            counts[key] = n
+            if (n > 1) base = "$base $n"
+            rows.add((base + (lang?.let { " [$it]" } ?: "")) to g.isTrackSelected(ti))
+            map.add(gi to ti)
+        }
+    }
+    return TrackRows(rows, map)
+}
+
+private fun handleTrackRowClick(
+    i: Int,
+    data: TrackRows,
+    player: Player,
+    groups: List<Tracks.Group>,
+    type: Int,
+    context: Context,
+) {
+    val prefs = context.getSharedPreferences("xui_track_prefs", 0)
+    when {
+        i == 0 -> {
+            if (selectPreferred(player, groups, type, "pt")) {
+                prefs.edit().putString(keyFor(type), "pt").apply()
+            } else {
+                Toast.makeText(context, "Português não encontrado neste vídeo", Toast.LENGTH_SHORT).show()
+            }
+        }
+        i == 1 -> {
+            setDisabled(player, type, true)
+            prefs.edit().putString(keyFor(type), "none").apply()
+        }
+        else -> {
+            val (gi, ti) = data.map[i - 2]
+            selectTrackAt(player, groups, gi, ti, type)
+            prefs.edit().putString(keyFor(type), langKey(groups[gi].getTrackFormat(ti).language) ?: "und").apply()
+        }
+    }
+}
+
+@Composable
+private fun TrackPanelOverlay(
+    title: String,
+    rows: List<Pair<String, Boolean>>,
+    onDismiss: () -> Unit,
+    onRowClick: (Int) -> Unit,
+) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Color(0x99000000))
+            .clickable { onDismiss() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth(0.8f)
+                .fillMaxHeight(0.7f)
+                .background(Color(0xE61A1A1A), RoundedCornerShape(14.dp))
+                .padding(24.dp)
+                .clickable { },
+        ) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(title, color = Color.White, fontSize = 20.sp, modifier = Modifier.weight(1f))
+                Text("✕", color = Color.White, fontSize = 20.sp, modifier = Modifier.clickable { onDismiss() }.padding(8.dp))
+            }
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                rows.forEachIndexed { i, row ->
+                    Text(
+                        (if (row.second) "●  " else "○  ") + row.first,
+                        color = Color.White,
+                        fontSize = 17.sp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onRowClick(i) }
+                            .padding(vertical = 10.dp, horizontal = 8.dp),
+                    )
+                }
             }
         }
     }
