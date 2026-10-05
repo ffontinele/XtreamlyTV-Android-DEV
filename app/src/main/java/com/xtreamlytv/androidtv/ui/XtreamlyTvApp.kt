@@ -193,6 +193,7 @@ private fun Sidebar(
             SidebarItem("heart", "Favorites", screen.section() == AppSection.Favorites, viewModel::openFavorites)
             SidebarItem("settings", "Settings", screen.section() == AppSection.Settings, viewModel::openSettings)
             SidebarItem("folder", "Vídeos offline", screen.section() == AppSection.Offline) { viewModel.openOfflineVideos() }
+            SidebarItem("list", "M3U", screen.section() == AppSection.M3u) { viewModel.openM3u() }
             }
         }
         Spacer(Modifier.weight(1f))
@@ -266,7 +267,7 @@ private fun ClockText() {
 
 private fun formatClock(): String = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
 
-private enum class AppSection { Home, Live, Movies, Series, Favorites, Settings, Offline }
+private enum class AppSection { Home, Live, Movies, Series, Favorites, Settings, Offline, M3u }
 
 private fun AppScreen.section(): AppSection = when (this) {
     AppScreen.Home -> AppSection.Home
