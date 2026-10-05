@@ -74,6 +74,7 @@ sealed interface AppScreen {
     ) : AppScreen
     data object Settings : AppScreen
     data object OfflineVideos : AppScreen
+    data object M3u : AppScreen
 }
 
 data class AppUiState(
@@ -735,7 +736,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                         id = it.id,
                         type = ContentType.LIVE,
                         name = it.name,
-                        coverUrl = it.logo,
                     )
                 }
                 _state.update { 
