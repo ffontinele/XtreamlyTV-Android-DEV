@@ -10,6 +10,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.net.Uri
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +28,7 @@ fun M3uScreen(
     viewModel: AppViewModel,
 ) {
     var urlInput by remember { mutableStateOf("https://github.com/iptv-com/iptv/raw/refs/heads/main/lists/brazil.m3u") }
+    val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? -> uri?.let { viewModel.importM3uFromFile(it) } }
     val colors = palette()
     
     Column(
@@ -57,6 +61,17 @@ fun M3uScreen(
                 .clickable { viewModel.loadM3uFromUrl(urlInput) }
                 .padding(horizontal = 24.dp, vertical = 12.dp),
         )
+        Text(
+            "📂 Ler arquivo .m3u",
+            color = colors.text,
+            fontSize = 14.sp,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF2A2A2A))
+                .clickable { filePicker.launch("*/*") }
+                .padding(horizontal = 20.dp, vertical = 10.dp),
+        )
+
         Text(
             "💾 Save as provider",
             color = colors.text,

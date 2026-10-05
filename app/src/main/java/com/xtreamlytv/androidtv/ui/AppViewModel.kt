@@ -20,6 +20,7 @@ import com.xtreamlytv.androidtv.data.LocalStateStore
 import com.xtreamlytv.androidtv.data.ProviderUrl
 import com.xtreamlytv.androidtv.data.XtreamClient
 import com.xtreamlytv.androidtv.data.M3uParser
+import com.xtreamlytv.androidtv.data.M3uCredentialExtractor
 import com.xtreamlytv.androidtv.data.M3uChannel
 import com.xtreamlytv.androidtv.data.itemKey
 import com.xtreamlytv.androidtv.model.AppSettings
@@ -246,7 +247,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 try {
                     val channels = withTimeout(180_000L) {
                         val f = ensureM3uLocal(normalizedCredentials)
-                        M3uParser.parseFromFile(f)
+                        M3uParser.parseFromFile(f, limit = 30_000)
                     }
                     client = null
                     m3uMode = true
@@ -1028,6 +1029,116 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         credentialsStore.saveAll(current)
         credentialsStore.setActive(novo.id)
         connect(novo)
+    }
+
+    fun importM3uAsProvider(url: String, onResult: (String) -> Unit = {}) {
+        val trimmed = url.trim()
+        if (trimmed.isBlank()) { onResult("URL vazia."); return }
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(loading = true, error = null) }
+                val head = M3uCredentialExtractor.fetchFirstLines(trimmed)
+                val extracted = M3uCredentialExtractor.extract(head)
+                if (extracted != null) {
+                    onResult("Credenciais extraídas — conectando como Xtream...")
+                    val current = credentialsStore.loadAll().toMutableList()
+                    current.add(extracted)
+                    credentialsStore.saveAll(current)
+                    credentialsStore.setActive(extracted.id)
+                    _state.update { it.copy(loading = false) }
+                    connect(extracted)
+                } else {
+                    onResult("Lista pública detectada — carregando como M3U nativo...")
+                    addM3uProvider("M3U List", trimmed)
+                    _state.update { it.copy(loading = false) }
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(loading = false, error = "Falha ao importar M3U: ${e.message?.take(120) ?: "erro"}") }
+                onResult("Erro: ${e.message?.take(80)}")
+            }
+        }
+    }
+
+    fun importM3uFromFile(uri: android.net.Uri, onResult: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                _state.update { it.copy(loading = true, error = null) }
+                val text = withContext(Dispatchers.IO) {
+                    getApplication<android.app.Application>().contentResolver.openInputStream(uri)?.bufferedReader()?.use { r ->
+                        val sb = StringBuilder()
+                        var lines = 0
+                        var bytes = 0L
+                        while (lines < 200 && bytes < 256 * 1024) {
+                            val line = r.readLine() ?: break
+                            sb.appendLine(line)
+                            bytes += line.length + 1
+                            lines++
+                        }
+                        sb.toString()
+                    } ?: ""
+                }
+                val extracted = M3uCredentialExtractor.extract(text)
+                if (extracted != null) {
+                    onResult("Credenciais extraídas do arquivo — conectando como Xtream...")
+                    val current = credentialsStore.loadAll().toMutableList()
+                    current.add(extracted)
+                    credentialsStore.saveAll(current)
+                    credentialsStore.setActive(extracted.id)
+                    _state.update { it.copy(loading = false) }
+                    connect(extracted)
+                } else {
+                    // fallback: salvar o arquivo no cache como provider M3U
+                    val id = java.util.UUID.randomUUID().toString()
+                    val f = java.io.File(getApplication<android.app.Application>().cacheDir, "m3u_$id.m3u")
+                    withContext(Dispatchers.IO) {
+                        getApplication<android.app.Application>().contentResolver.openInputStream(uri)?.use { input ->
+                            f.outputStream().use { out -> input.copyTo(out) }
+                        }
+                    }
+                    val channels = M3uParser.parseFromFile(f, limit = 30_000)
+                    client = null
+                    m3uMode = true
+                    m3uChannels.clear()
+                    channels.forEach { m3uChannels[it.id] = it }
+                    val itemsByGroup = mutableMapOf<String, MutableList<CatalogItem>>()
+                    val items = ArrayList<CatalogItem>(channels.size)
+                    channels.forEach { ch ->
+                        val item = CatalogItem(id = ch.id, type = ContentType.LIVE, name = ch.name, categoryId = ch.group, imageUrl = ch.logo)
+                        items.add(item)
+                        itemsByGroup.getOrPut(ch.group) { mutableListOf() }.add(item)
+                    }
+                    m3uCatalog.clear()
+                    m3uCatalog["all"] = items
+                    m3uCatalog.putAll(itemsByGroup)
+                    val cats = listOf(Category(id = "all", name = "ALL")) + itemsByGroup.keys.map { Category(id = it, name = it) }
+                    val cred = Credentials(server = "file://$id", username = "m3u", password = "", name = "Arquivo M3U", kind = "m3u")
+                    val current = credentialsStore.loadAll().toMutableList()
+                    current.add(cred)
+                    credentialsStore.saveAll(current)
+                    credentialsStore.setActive(cred.id)
+                    _state.update {
+                        it.copy(
+                            screen = AppScreen.Home,
+                            initializing = false,
+                            loading = false,
+                            catalogsLoading = false,
+                            error = null,
+                            provider = ProviderSummary(username = "M3U", status = "Active", expiration = null),
+                            categories = mapOf(ContentType.LIVE to cats),
+                            selectedCategories = emptyMap(),
+                            items = emptyList(),
+                            loadedItems = emptyMap(),
+                            searchQuery = "",
+                            credentials = cred,
+                        )
+                    }
+                    onResult("Lista pública carregada do arquivo.")
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(loading = false, error = "Falha ao ler arquivo: ${e.message?.take(120) ?: "erro"}") }
+                onResult("Erro: ${e.message?.take(80)}")
+            }
+        }
     }
 
     fun addM3uProvider(name: String, url: String) {

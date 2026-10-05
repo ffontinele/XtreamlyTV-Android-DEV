@@ -62,6 +62,7 @@ fun ProviderManagerCard(state: AppUiState, viewModel: AppViewModel) {
     var deleteConfirmId by remember { mutableStateOf<String?>(null) }
     var validityCheckId by remember { mutableStateOf<String?>(null) }
     var showQr by remember { mutableStateOf(false) }
+    var showM3uImport by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     Column(
@@ -103,10 +104,18 @@ fun ProviderManagerCard(state: AppUiState, viewModel: AppViewModel) {
         Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             TvButton("+ Add provider", { addingProvider = true }, Modifier.width(150.dp))
             TvButton("QR Code", { showQr = true }, Modifier.width(110.dp), TvButtonStyle.Secondary)
+            TvButton("M3U", { showM3uImport = true }, Modifier.width(90.dp), TvButtonStyle.Secondary)
             TvButton("Disconnect", viewModel::disconnect, Modifier.width(140.dp), TvButtonStyle.Danger)
         }
         if (showQr) {
             QrDialog(url = CloudSync.getQrUrl(context), onDismiss = { showQr = false })
+        }
+        if (showM3uImport) {
+            M3uImportDialog(
+                onDismiss = { showM3uImport = false },
+                onImportUrl = { url -> viewModel.importM3uAsProvider(url); showM3uImport = false },
+                onImportFile = { uri -> viewModel.importM3uFromFile(uri); showM3uImport = false },
+            )
         }
         validityCheckId?.let { vid ->
             val vcred = providers.find { it.id == vid }
