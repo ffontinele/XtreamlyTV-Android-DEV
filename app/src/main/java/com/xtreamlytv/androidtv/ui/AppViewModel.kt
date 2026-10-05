@@ -205,12 +205,18 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         failureScreen: AppScreen,
     ) {
         val normalizedCredentials = runCatching {
-            credentials.copy(
-                server = ProviderUrl.normalize(credentials.server),
-                username = credentials.username.trim(),
-            ).also {
-                require(it.username.isNotBlank()) { "Enter your provider username." }
-                require(it.password.isNotBlank()) { "Enter your provider password." }
+            if (credentials.kind == "m3u") {
+                credentials.copy(server = credentials.server.trim()).also {
+                    require(it.server.isNotBlank()) { "Enter the M3U URL." }
+                }
+            } else {
+                credentials.copy(
+                    server = ProviderUrl.normalize(credentials.server),
+                    username = credentials.username.trim(),
+                ).also {
+                    require(it.username.isNotBlank()) { "Enter your provider username." }
+                    require(it.password.isNotBlank()) { "Enter your provider password." }
+                }
             }
         }.getOrElse { error ->
             _state.update {
