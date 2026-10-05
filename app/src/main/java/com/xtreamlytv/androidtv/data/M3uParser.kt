@@ -14,8 +14,27 @@ data class M3uChannel(
 
 object M3uParser {
     suspend fun parseFromUrl(url: String): List<M3uChannel> = withContext(Dispatchers.IO) {
-        val text = URL(url).readText()
+        val text = fetchWithAuth(url)
         parse(text)
+    }
+    
+    private fun fetchWithAuth(url: String): String {
+        val parsed = java.net.URI(url).toURL()
+        val userInfo = parsed.userInfo
+        if (userInfo != null && userInfo.contains(':')) {
+            // URL com credenciais embutidas (http://user:pass@...)
+            val (user, pass) = userInfo.split(':', limit = 2)
+            val cleanUrl = "${parsed.protocol}://${parsed.host}:${parsed.port}${parsed.path}${if (parsed.query != null) "?${parsed.query}" else ""}"
+            val conn = java.net.URI(cleanUrl).toURL().openConnection() as java.net.HttpURLConnection
+            val auth = android.util.Base64.encodeToString("$user:$pass".toByteArray(), android.util.Base64.NO_WRAP)
+            conn.setRequestProperty("Authorization", "Basic $auth")
+            conn.connectTimeout = 15000
+            conn.readTimeout = 30000
+            return conn.inputStream.bufferedReader().use { it.readText() }
+        } else {
+            // URL normal (sem auth ou com params GET)
+            return parsed.readText()
+        }
     }
     
     fun parse(text: String): List<M3uChannel> {
