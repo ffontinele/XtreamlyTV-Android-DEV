@@ -19,6 +19,8 @@ import com.xtreamlytv.androidtv.data.ImportResult
 import com.xtreamlytv.androidtv.data.LocalStateStore
 import com.xtreamlytv.androidtv.data.ProviderUrl
 import com.xtreamlytv.androidtv.data.XtreamClient
+import com.xtreamlytv.androidtv.data.M3uParser
+import com.xtreamlytv.androidtv.data.M3uChannel
 import com.xtreamlytv.androidtv.data.itemKey
 import com.xtreamlytv.androidtv.model.AppSettings
 import com.xtreamlytv.androidtv.model.CatalogItem
@@ -119,6 +121,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private var client: XtreamClient? = null
     private val categoryCache = LinkedHashMap<String, List<CatalogItem>>(16, 0.75f, true)
     private var catalogRequestId = 0L
+    private var m3uChannels = mutableMapOf<String, M3uChannel>()
     private val lastFocusByArea = mutableMapOf<String, FocusRequest>()
     private val _state = MutableStateFlow(AppUiState())
     val state: StateFlow<AppUiState> = _state.asStateFlow()
@@ -346,6 +349,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
+    fun openM3u() = _state.update {
+        it.copy(screen = AppScreen.M3u, items = emptyList(), searchQuery = "", error = null, focusRequest = null)
+    }
+
     fun openSettings() = _state.update {
         it.copy(screen = AppScreen.Settings, items = emptyList(), searchQuery = "", error = null, focusRequest = null)
     }
@@ -467,6 +474,22 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun play(item: CatalogItem, queue: List<CatalogItem> = currentQueueFor(item)) {
+        // Check if this is an M3U channel
+        val m3u = m3uChannels[item.id]
+        if (m3u != null) {
+            val origin = _state.value.screen
+            val returnFocus = focusForScreen(origin)
+            val request = PlayerRequest(
+                item = item,
+                queue = listOf(item),
+                urlCandidates = listOf(m3u.url),
+                startPositionMs = 0L,
+            )
+            addRecent(item)
+            _state.update { it.copy(screen = AppScreen.Player(request, origin, returnFocus), error = null, focusRequest = null) }
+            return
+        }
+        
         val api = client ?: return
         val playableQueue = queue.filter { it.type == item.type && it.type != ContentType.SERIES }
         val origin = _state.value.screen
@@ -698,6 +721,36 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         _state.update { it.copy(settings = normalized, error = null) }
         trimCategoryCache(normalized.maxCachedCategories)
         viewModelScope.launch(Dispatchers.IO) { localStateStore.saveSettings(normalized) }
+    }
+
+    fun loadM3uFromUrl(url: String) {
+        viewModelScope.launch {
+            _state.update { it.copy(loading = true, error = null) }
+            try {
+                val channels = M3uParser.parseFromUrl(url)
+                m3uChannels.clear()
+                channels.forEach { m3uChannels[it.id] = it }
+                val items = channels.map { 
+                    CatalogItem(
+                        id = it.id,
+                        type = ContentType.LIVE,
+                        name = it.name,
+                        coverUrl = it.logo,
+                    )
+                }
+                _state.update { 
+                    it.copy(
+                        items = items,
+                        loading = false,
+                        screen = AppScreen.Catalog(ContentType.LIVE),
+                    ) 
+                }
+            } catch (e: Exception) {
+                _state.update { 
+                    it.copy(loading = false, error = "Failed to load M3U: ${e.message}") 
+                }
+            }
+        }
     }
 
     fun clearCatalogCache() {

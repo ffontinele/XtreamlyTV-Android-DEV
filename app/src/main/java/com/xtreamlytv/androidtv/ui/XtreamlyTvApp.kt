@@ -158,6 +158,7 @@ private fun AppShell(state: AppUiState, viewModel: AppViewModel) {
                         is AppScreen.FavoriteGroupEditor -> FavoriteGroupEditorScreen(screen.groupId, state, viewModel)
                         AppScreen.Settings -> SettingsScreen(state, viewModel)
                         AppScreen.OfflineVideos -> OfflineVideosScreen(state, viewModel)
+                        AppScreen.M3u -> M3uScreen(state, viewModel)
                         else -> Unit
                     }
                 }
