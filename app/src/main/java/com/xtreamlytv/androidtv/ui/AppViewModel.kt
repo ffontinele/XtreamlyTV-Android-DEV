@@ -253,17 +253,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                     m3uMode = true
                     m3uChannels.clear()
                     channels.forEach { m3uChannels[it.id] = it }
-                    val itemsByGroup = mutableMapOf<String, MutableList<CatalogItem>>()
-                    val items = ArrayList<CatalogItem>(channels.size)
-                    channels.forEach { ch ->
-                        val item = CatalogItem(id = ch.id, type = ContentType.LIVE, name = ch.name, categoryId = ch.group, imageUrl = ch.logo)
-                        items.add(item)
-                        itemsByGroup.getOrPut(ch.group) { mutableListOf() }.add(item)
-                    }
-                    m3uCatalog.clear()
-                    m3uCatalog["all"] = items
-                    m3uCatalog.putAll(itemsByGroup)
-                    val cats = listOf(Category(id = "all", name = "ALL")) + itemsByGroup.keys.map { Category(id = it, name = it) }
+                    val cats = installM3uChannels(channels)
                     if (persist) {
                         withContext(Dispatchers.IO) {
                             val list = credentialsStore.loadAll().toMutableList()
@@ -281,14 +271,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                             catalogsLoading = false,
                             error = null,
                             provider = ProviderSummary(username = "M3U", status = "Active", expiration = null),
-                            categories = mapOf(ContentType.LIVE to cats),
+                            categories = cats,
                             selectedCategories = emptyMap(),
                             items = emptyList(),
                             loadedItems = emptyMap(),
                             searchQuery = "",
                         )
                     }
-                    (cats.firstOrNull { it.id != "all" } ?: cats.first()).let { selectCategory(ContentType.LIVE, it) }
+                    val firstType = cats.keys.firstOrNull() ?: ContentType.LIVE
+                    val firstCat = cats[firstType]?.firstOrNull { it.id != firstType.name + ":all" } ?: cats[firstType]?.firstOrNull()
+                    firstCat?.let { selectCategory(firstType, it) }
                 } catch (error: CancellationException) {
                     if (error !is TimeoutCancellationException) throw error
                     connectionFailed(error, failureScreen, startup)
@@ -596,6 +588,41 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         val conn = M3uParser.openConnection(cred.server)
         conn.inputStream.use { input -> f.outputStream().use { out -> input.copyTo(out, 65536) } }
         f
+    }
+
+    private fun m3uItemType(ch: M3uChannel): ContentType = when {
+        ch.url.contains("/movie/") || Regex("(?i)(filme|movie|cinema|vod)").containsMatchIn(ch.group) -> ContentType.MOVIE
+        else -> ContentType.LIVE
+    }
+
+    private fun installM3uChannels(channels: List<M3uChannel>): Map<ContentType, List<Category>> {
+        m3uChannels.clear()
+        channels.forEach { m3uChannels[it.id] = it }
+        m3uCatalog.clear()
+        val liveItems = mutableListOf<CatalogItem>()
+        val movieItems = mutableListOf<CatalogItem>()
+        val liveGroups = linkedMapOf<String, MutableList<CatalogItem>>()
+        val movieGroups = linkedMapOf<String, MutableList<CatalogItem>>()
+        channels.forEach { ch ->
+            val type = m3uItemType(ch)
+            val catId = type.name + ":" + ch.group
+            val item = CatalogItem(id = ch.id, type = type, name = ch.name, categoryId = catId, imageUrl = ch.logo)
+            if (type == ContentType.MOVIE) {
+                movieItems.add(item)
+                movieGroups.getOrPut(ch.group) { mutableListOf() }.add(item)
+            } else {
+                liveItems.add(item)
+                liveGroups.getOrPut(ch.group) { mutableListOf() }.add(item)
+            }
+        }
+        m3uCatalog["LIVE:all"] = liveItems
+        m3uCatalog["MOVIE:all"] = movieItems
+        liveGroups.forEach { (g, list) -> m3uCatalog["LIVE:$g"] = list }
+        movieGroups.forEach { (g, list) -> m3uCatalog["MOVIE:$g"] = list }
+        val cats = mutableMapOf<ContentType, List<Category>>()
+        if (liveItems.isNotEmpty()) cats[ContentType.LIVE] = listOf(Category("LIVE:all", "ALL")) + liveGroups.keys.map { Category("LIVE:$it", it) }
+        if (movieItems.isNotEmpty()) cats[ContentType.MOVIE] = listOf(Category("MOVIE:all", "ALL")) + movieGroups.keys.map { Category("MOVIE:$it", it) }
+        return cats
     }
 
     private fun urlCandidatesFor(item: CatalogItem): List<String> {
@@ -1037,8 +1064,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 _state.update { it.copy(loading = true, error = null) }
-                val head = M3uCredentialExtractor.fetchFirstLines(trimmed)
-                val extracted = M3uCredentialExtractor.extract(head)
+                val head = kotlin.runCatching { M3uCredentialExtractor.fetchFirstLines(trimmed) }.getOrDefault("")
+                val extracted = M3uCredentialExtractor.extract(trimmed + "\n" + head)
                 if (extracted != null) {
                     onResult("Credenciais extraídas — conectando como Xtream...")
                     val current = credentialsStore.loadAll().toMutableList()
@@ -1100,17 +1127,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                     m3uMode = true
                     m3uChannels.clear()
                     channels.forEach { m3uChannels[it.id] = it }
-                    val itemsByGroup = mutableMapOf<String, MutableList<CatalogItem>>()
-                    val items = ArrayList<CatalogItem>(channels.size)
-                    channels.forEach { ch ->
-                        val item = CatalogItem(id = ch.id, type = ContentType.LIVE, name = ch.name, categoryId = ch.group, imageUrl = ch.logo)
-                        items.add(item)
-                        itemsByGroup.getOrPut(ch.group) { mutableListOf() }.add(item)
-                    }
-                    m3uCatalog.clear()
-                    m3uCatalog["all"] = items
-                    m3uCatalog.putAll(itemsByGroup)
-                    val cats = listOf(Category(id = "all", name = "ALL")) + itemsByGroup.keys.map { Category(id = it, name = it) }
+                    val cats = installM3uChannels(channels)
                     val cred = Credentials(server = "file://$id", username = "m3u", password = "", name = "Arquivo M3U", kind = "m3u")
                     val current = credentialsStore.loadAll().toMutableList()
                     current.add(cred)
@@ -1124,7 +1141,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                             catalogsLoading = false,
                             error = null,
                             provider = ProviderSummary(username = "M3U", status = "Active", expiration = null),
-                            categories = mapOf(ContentType.LIVE to cats),
+                            categories = cats,
                             selectedCategories = emptyMap(),
                             items = emptyList(),
                             loadedItems = emptyMap(),
