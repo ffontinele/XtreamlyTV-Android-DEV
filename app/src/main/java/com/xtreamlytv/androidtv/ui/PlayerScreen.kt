@@ -45,6 +45,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -54,6 +56,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
@@ -62,6 +65,8 @@ import androidx.media3.common.Player
 import androidx.media3.common.C
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
+import androidx.media3.common.text.Cue
+import androidx.media3.common.text.CueGroup
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
@@ -100,6 +105,9 @@ fun PlayerScreen(
     var showAudioPanel by remember { mutableStateOf(false) }
     var showSubPanel by remember { mutableStateOf(false) }
     var autoApplied by remember(request.item.id) { mutableStateOf(false) }
+    var subtitleCues by remember(request.item.id) { mutableStateOf<List<Cue>>(emptyList()) }
+    var showSubSettings by remember { mutableStateOf(false) }
+    var subStyle by remember { mutableStateOf(loadSubStyle(context)) }
     val allGroups = trackGroups?.groups ?: emptyList<Tracks.Group>()
     val audioGroups = allGroups.filter { it.type == C.TRACK_TYPE_AUDIO }
     val subGroups = allGroups.filter { it.type == C.TRACK_TYPE_TEXT }
@@ -157,6 +165,10 @@ fun PlayerScreen(
                     autoApplied = true
                     applyPreferredTracks(player, tracks, context)
                 }
+            }
+
+            override fun onCues(cueGroup: CueGroup) {
+                subtitleCues = cueGroup.cues
             }
 
             override fun onPlayerError(error: PlaybackException) {
@@ -236,10 +248,11 @@ fun PlayerScreen(
             .focusRequester(focusRequester)
             .onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                if (showAudioPanel || showSubPanel) {
+                if (showAudioPanel || showSubPanel || showSubSettings) {
                     if (event.key == Key.Back) {
                         showAudioPanel = false
                         showSubPanel = false
+                        showSubSettings = false
                     }
                     return@onPreviewKeyEvent true
                 }
@@ -260,6 +273,7 @@ fun PlayerScreen(
             factory = { ctx ->
                 PlayerView(ctx).apply {
                     useController = false
+                    subtitleView?.visibility = android.view.View.GONE
                     resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                     layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
                     this.player = player
@@ -322,6 +336,32 @@ fun PlayerScreen(
             )
         }
 
+        val subtitleText = subtitleCues.joinToString("\n") { it.text?.toString() ?: "" }.trim()
+        if (subtitleText.isNotEmpty()) {
+            Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = if (subStyle.positionTop) Alignment.TopCenter else Alignment.BottomCenter,
+            ) {
+                Text(
+                    subtitleText,
+                    color = SUB_COLORS[subStyle.colorIdx].copy(alpha = SUB_OPACITY[subStyle.opacityIdx]),
+                    fontSize = SUB_SIZES[subStyle.sizeIdx].sp,
+                    fontWeight = if (subStyle.bold) FontWeight.Bold else FontWeight.Normal,
+                    textAlign = TextAlign.Center,
+                    style = TextStyle(
+                        shadow = if (subStyle.shadow) Shadow(Color.Black, Offset(2f, 2f), 8f) else Shadow(Color.Transparent, Offset.Zero, 0f),
+                    ),
+                    modifier = Modifier
+                        .padding(
+                            top = if (subStyle.positionTop) 24.dp else 0.dp,
+                            bottom = if (subStyle.positionTop) 0.dp else 110.dp,
+                        )
+                        .background(subBgColorOf(subStyle))
+                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                )
+            }
+        }
+
         if (showAudioPanel || showSubPanel) {
             val forSubs = showSubPanel
             val groups = if (forSubs) subGroups else audioGroups
@@ -331,11 +371,24 @@ fun PlayerScreen(
                 title = if (forSubs) "Faixas de Legendas" else "Faixas de Áudio",
                 rows = data.rows,
                 onDismiss = { showAudioPanel = false; showSubPanel = false },
+                onOpenSettings = if (forSubs) {
+                    { showSubPanel = false; showSubSettings = true }
+                } else {
+                    null
+                },
                 onRowClick = { i ->
                     handleTrackRowClick(i, data, player, groups, type, context)
                     showAudioPanel = false
                     showSubPanel = false
                 },
+            )
+        }
+
+        if (showSubSettings) {
+            SubtitleSettingsOverlay(
+                style = subStyle,
+                onChange = { novo -> subStyle = novo; saveSubStyle(context, novo) },
+                onDismiss = { showSubSettings = false },
             )
         }
 
@@ -669,6 +722,7 @@ private fun TrackPanelOverlay(
     rows: List<Pair<String, Boolean>>,
     onDismiss: () -> Unit,
     onRowClick: (Int) -> Unit,
+    onOpenSettings: (() -> Unit)? = null,
 ) {
     Box(
         Modifier
@@ -687,6 +741,9 @@ private fun TrackPanelOverlay(
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(title, color = Color.White, fontSize = 20.sp, modifier = Modifier.weight(1f))
+                if (onOpenSettings != null) {
+                    Text("⚙", color = Color.White, fontSize = 20.sp, modifier = Modifier.clickable { onOpenSettings() }.padding(8.dp))
+                }
                 Text("✕", color = Color.White, fontSize = 20.sp, modifier = Modifier.clickable { onDismiss() }.padding(8.dp))
             }
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -700,6 +757,136 @@ private fun TrackPanelOverlay(
                             .clickable { onRowClick(i) }
                             .padding(vertical = 10.dp, horizontal = 8.dp),
                     )
+                }
+            }
+        }
+    }
+}
+
+// ================= CONFIGURACOES DE LEGENDAS (Fase 2) =================
+
+private data class SubStyle(
+    val positionTop: Boolean = false,
+    val colorIdx: Int = 0,
+    val bold: Boolean = false,
+    val sizeIdx: Int = 1,
+    val opacityIdx: Int = 3,
+    val bgIdx: Int = 1,
+    val shadow: Boolean = true,
+)
+
+private val SUB_COLORS = listOf(Color.White, Color.Black, Color.Red, Color(0xFF4CD964), Color.Yellow, Color.Cyan)
+private val SUB_SIZES = floatArrayOf(14f, 18f, 22f, 26f)
+private val SUB_SIZE_NAMES = listOf("Pequeno", "Médio", "Grande", "Enorme")
+private val SUB_OPACITY = floatArrayOf(0.25f, 0.5f, 0.75f, 1f)
+private val SUB_OPACITY_NAMES = listOf("25%", "50%", "75%", "100%")
+private val SUB_BG_NAMES = listOf("Sem fundo", "Translúcido", "Sólido")
+
+private fun subBgColorOf(s: SubStyle): Color = when (s.bgIdx) {
+    0 -> Color.Transparent
+    1 -> Color(0x66000000)
+    else -> Color.Black
+}
+
+private fun loadSubStyle(ctx: Context): SubStyle {
+    val p = ctx.getSharedPreferences("xui_subtitle_style", 0)
+    return SubStyle(
+        positionTop = p.getBoolean("pos_top", false),
+        colorIdx = p.getInt("color", 0),
+        bold = p.getBoolean("bold", false),
+        sizeIdx = p.getInt("size", 1),
+        opacityIdx = p.getInt("opacity", 3),
+        bgIdx = p.getInt("bg", 1),
+        shadow = p.getBoolean("shadow", true),
+    )
+}
+
+private fun saveSubStyle(ctx: Context, s: SubStyle) {
+    ctx.getSharedPreferences("xui_subtitle_style", 0).edit()
+        .putBoolean("pos_top", s.positionTop)
+        .putInt("color", s.colorIdx)
+        .putBoolean("bold", s.bold)
+        .putInt("size", s.sizeIdx)
+        .putInt("opacity", s.opacityIdx)
+        .putInt("bg", s.bgIdx)
+        .putBoolean("shadow", s.shadow)
+        .apply()
+}
+
+@Composable
+private fun SettingRow(label: String, onClick: () -> Unit) {
+    Text(
+        label,
+        color = Color.White,
+        fontSize = 17.sp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 10.dp, horizontal = 8.dp),
+    )
+}
+
+@Composable
+private fun SubtitleSettingsOverlay(
+    style: SubStyle,
+    onChange: (SubStyle) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Color(0x99000000))
+            .clickable { onDismiss() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth(0.8f)
+                .fillMaxHeight(0.8f)
+                .background(Color(0xE61A1A1A), RoundedCornerShape(14.dp))
+                .padding(24.dp)
+                .clickable { },
+        ) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("Configurações de Legendas", color = Color.White, fontSize = 20.sp, modifier = Modifier.weight(1f))
+                Text("✕", color = Color.White, fontSize = 20.sp, modifier = Modifier.clickable { onDismiss() }.padding(8.dp))
+            }
+            Text(
+                "Texto de exemplo da legenda",
+                color = SUB_COLORS[style.colorIdx].copy(alpha = SUB_OPACITY[style.opacityIdx]),
+                fontSize = SUB_SIZES[style.sizeIdx].sp,
+                fontWeight = if (style.bold) FontWeight.Bold else FontWeight.Normal,
+                textAlign = TextAlign.Center,
+                style = TextStyle(
+                    shadow = if (style.shadow) Shadow(Color.Black, Offset(2f, 2f), 8f) else Shadow(Color.Transparent, Offset.Zero, 0f),
+                ),
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .background(subBgColorOf(style))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+            )
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                SettingRow("Posição: " + if (style.positionTop) "Superior" else "Inferior") { onChange(style.copy(positionTop = !style.positionTop)) }
+                SettingRow("Negrito: " + if (style.bold) "Ativado" else "Desativado") { onChange(style.copy(bold = !style.bold)) }
+                SettingRow("Tamanho: " + SUB_SIZE_NAMES[style.sizeIdx]) { onChange(style.copy(sizeIdx = (style.sizeIdx + 1) % SUB_SIZES.size)) }
+                SettingRow("Opacidade: " + SUB_OPACITY_NAMES[style.opacityIdx]) { onChange(style.copy(opacityIdx = (style.opacityIdx + 1) % SUB_OPACITY.size)) }
+                SettingRow("Fundo: " + SUB_BG_NAMES[style.bgIdx]) { onChange(style.copy(bgIdx = (style.bgIdx + 1) % SUB_BG_NAMES.size)) }
+                SettingRow("Sombra: " + if (style.shadow) "Ativada" else "Desativada") { onChange(style.copy(shadow = !style.shadow)) }
+                Text("Cor do texto:", color = Color.White, fontSize = 17.sp, modifier = Modifier.padding(vertical = 8.dp, horizontal = 8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    SUB_COLORS.forEachIndexed { i, c ->
+                        Box(
+                            Modifier
+                                .size(44.dp)
+                                .background(c, RoundedCornerShape(6.dp))
+                                .clickable { onChange(style.copy(colorIdx = i)) },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (i == style.colorIdx) {
+                                Text("✓", color = if (i == 0 || i == 4 || i == 5) Color.Black else Color.White, fontSize = 18.sp)
+                            }
+                        }
+                    }
                 }
             }
         }
