@@ -36,6 +36,7 @@ data class Credentials(
     val password: String,
     val id: String = java.util.UUID.randomUUID().toString(),
     val name: String = "Default",
+    val kind: String = "xtream",
 )
 
 data class Category(

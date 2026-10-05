@@ -123,6 +123,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val categoryCache = LinkedHashMap<String, List<CatalogItem>>(16, 0.75f, true)
     private var catalogRequestId = 0L
     private var m3uChannels = mutableMapOf<String, M3uChannel>()
+    private var m3uMode = false
+    private var m3uCatalog = mutableMapOf<String, List<CatalogItem>>()
     private val lastFocusByArea = mutableMapOf<String, FocusRequest>()
     private val _state = MutableStateFlow(AppUiState())
     val state: StateFlow<AppUiState> = _state.asStateFlow()
@@ -233,8 +235,61 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
 
+        if (normalizedCredentials.kind == "m3u") {
+            viewModelScope.launch {
+                try {
+                    val channels = withTimeout(CONNECTION_TIMEOUT_MS) { M3uParser.parseFromUrl(normalizedCredentials.server) }
+                    client = null
+                    m3uMode = true
+                    m3uChannels.clear()
+                    channels.forEach { m3uChannels[it.id] = it }
+                    val items = channels.map {
+                        CatalogItem(id = it.id, type = ContentType.LIVE, name = it.name, categoryId = it.group, imageUrl = it.logo)
+                    }
+                    val groups = channels.map { it.group }.distinct()
+                    val cats = listOf(Category(id = "all", name = "ALL")) + groups.map { Category(id = it, name = it) }
+                    m3uCatalog.clear()
+                    m3uCatalog["all"] = items
+                    groups.forEach { g -> m3uCatalog[g] = items.filter { it.categoryId == g } }
+                    if (persist) {
+                        withContext(Dispatchers.IO) {
+                            val list = credentialsStore.loadAll().toMutableList()
+                            val idx = list.indexOfFirst { it.server == normalizedCredentials.server && it.username == normalizedCredentials.username }
+                            if (idx >= 0) { list[idx] = normalizedCredentials.copy(id = list[idx].id, name = list[idx].name) } else { list.add(normalizedCredentials) }
+                            credentialsStore.saveAll(list)
+                            credentialsStore.setActive(normalizedCredentials.id)
+                        }
+                    }
+                    _state.update {
+                        it.copy(
+                            screen = successScreen,
+                            initializing = false,
+                            loading = false,
+                            catalogsLoading = false,
+                            error = null,
+                            provider = ProviderSummary(username = "M3U", status = "Active", expiration = null),
+                            categories = mapOf(ContentType.LIVE to cats),
+                            selectedCategories = emptyMap(),
+                            items = emptyList(),
+                            loadedItems = emptyMap(),
+                            searchQuery = "",
+                        )
+                    }
+                    (cats.firstOrNull { it.id != "all" } ?: cats.first()).let { selectCategory(ContentType.LIVE, it) }
+                } catch (error: CancellationException) {
+                    if (error !is TimeoutCancellationException) throw error
+                    connectionFailed(error, failureScreen, startup)
+                } catch (error: Throwable) {
+                    connectionFailed(error, failureScreen, startup)
+                }
+            }
+            return
+        }
+
         viewModelScope.launch {
             try {
+                m3uMode = false
+                m3uCatalog.clear()
                 val candidate = XtreamClient(normalizedCredentials)
                 val profile = withTimeout(CONNECTION_TIMEOUT_MS) { candidate.authenticate() }
 
@@ -381,6 +436,22 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         category: Category,
         preserveRememberedFocus: Boolean = false,
     ) {
+        if (m3uMode) {
+            val list = m3uCatalog[category.id].orEmpty()
+            _state.update {
+                it.copy(
+                    loading = false,
+                    selectedCategories = it.selectedCategories + (type to category),
+                    items = list,
+                    searchQuery = "",
+                    error = null,
+                    focusRequest = if (preserveRememberedFocus) it.focusRequest
+                    else FocusRequest(catalogFocusScope(type, category.id), firstItem = true),
+                )
+            }
+            updateLoadedItems(type, list)
+            return
+        }
         val api = client ?: return
         val key = cacheKey(type, category.id)
         val cached = categoryCache[key]
@@ -499,11 +570,17 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         val request = PlayerRequest(
             item = item,
             queue = playableQueue.ifEmpty { listOf(item) },
-            urlCandidates = api.streamCandidates(item, _state.value.settings.streamFormat),
+            urlCandidates = urlCandidatesFor(item),
             startPositionMs = progress?.positionMs ?: 0L,
         )
         addRecent(item)
         _state.update { it.copy(screen = AppScreen.Player(request, origin, returnFocus), error = null, focusRequest = null) }
+    }
+
+    private fun urlCandidatesFor(item: CatalogItem): List<String> {
+        m3uChannels[item.id]?.let { return listOf(it.url) }
+        val api = client ?: return emptyList()
+        return urlCandidatesFor(item)
     }
 
     fun playAdjacent(delta: Int) {
@@ -512,7 +589,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         val currentIndex = queue.indexOfFirst { itemKey(it) == itemKey(screen.request.item) }
         if (currentIndex < 0 || queue.size < 2) return
         val next = queue[(currentIndex + delta + queue.size) % queue.size]
-        val api = client ?: return
         val progress = _state.value.progress[itemKey(next)]
         addRecent(next)
         _state.update {
@@ -521,7 +597,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                     request = PlayerRequest(
                         item = next,
                         queue = queue,
-                        urlCandidates = api.streamCandidates(next, it.settings.streamFormat),
+                        urlCandidates = urlCandidatesFor(next),
                         startPositionMs = progress?.positionMs ?: 0L,
                     ),
                     origin = screen.origin,
@@ -887,13 +963,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         if (idx < 0) return
         val target = idx + delta
         if (target !in queue.indices) return
-        val api = client ?: return
         val item = queue[target]
         val progress = _state.value.progress[itemKey(item)]
         val request = PlayerRequest(
             item = item,
             queue = queue,
-            urlCandidates = api.streamCandidates(item, _state.value.settings.streamFormat),
+            urlCandidates = urlCandidatesFor(item),
             startPositionMs = progress?.positionMs ?: 0L,
         )
         addRecent(item)
@@ -935,6 +1010,15 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         connect(novo)
     }
 
+    fun addM3uProvider(name: String, url: String) {
+        val cred = Credentials(server = url.trim(), username = "m3u", password = "", name = name.ifBlank { "M3U List" }, kind = "m3u")
+        val current = credentialsStore.loadAll().toMutableList()
+        current.add(cred)
+        credentialsStore.saveAll(current)
+        credentialsStore.setActive(cred.id)
+        connect(cred)
+    }
+
     fun updateProviderById(id: String, name: String, credentials: Credentials) {
         val current = credentialsStore.loadAll().toMutableList()
         val idx = current.indexOfFirst { it.id == id }
@@ -963,6 +1047,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun disconnect() {
         client = null
+        m3uMode = false
+        m3uCatalog.clear()
+        m3uChannels.clear()
         categoryCache.clear()
         lastFocusByArea.clear()
         _state.update {

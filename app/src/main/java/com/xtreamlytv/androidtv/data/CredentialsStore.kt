@@ -48,6 +48,7 @@ class CredentialsStore(context: Context) {
                     password = obj.getString("password"),
                     id = obj.getString("id"),
                     name = obj.optString("name", "Default"),
+                    kind = obj.optString("kind", "xtream"),
                 )
             }
         }.getOrDefault(emptyList())
@@ -62,6 +63,7 @@ class CredentialsStore(context: Context) {
                 put("server", cred.server.trimEnd('/'))
                 put("username", cred.username.trim())
                 put("password", cred.password)
+                put("kind", cred.kind)
             }
             arr.put(obj)
         }
