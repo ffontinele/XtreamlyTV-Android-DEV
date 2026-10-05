@@ -988,7 +988,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun back() {
         when (val screen = _state.value.screen) {
-            AppScreen.Login, AppScreen.Home -> Unit
+            AppScreen.Login, AppScreen.Home, AppScreen.M3u -> Unit
             is AppScreen.Player -> _state.update {
                 it.copy(screen = screen.origin, error = null, focusRequest = screen.returnFocus)
             }

@@ -279,6 +279,7 @@ private fun AppScreen.section(): AppSection = when (this) {
     AppScreen.Favorites, is AppScreen.FavoriteGroupBrowser, AppScreen.FavoriteGroupsManager, is AppScreen.FavoriteGroupEditor -> AppSection.Favorites
     AppScreen.Settings -> AppSection.Settings
     AppScreen.OfflineVideos -> AppSection.Offline
+    AppScreen.M3u -> AppSection.M3u
     is AppScreen.Player -> origin.section()
     AppScreen.Login -> AppSection.Home
 }
@@ -296,6 +297,7 @@ private fun screenTitle(screen: AppScreen): String = when (screen) {
     is AppScreen.FavoriteGroupBrowser -> "Favorites"
     AppScreen.FavoriteGroupsManager -> "Edit Groups"
     is AppScreen.FavoriteGroupEditor -> if (screen.groupId == null) "Add Group" else "Edit Group"
+    AppScreen.M3u -> "M3U"
     AppScreen.Settings -> "Settings"
     AppScreen.OfflineVideos -> "Vídeos offline"
     is AppScreen.Player -> screen.request.item.name
