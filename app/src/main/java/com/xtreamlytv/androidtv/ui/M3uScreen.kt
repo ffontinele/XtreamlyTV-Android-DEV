@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.xtreamlytv.androidtv.model.CatalogItem
+import com.xtreamlytv.androidtv.ui.theme.palette
 
 @Composable
 fun M3uScreen(
@@ -24,7 +25,7 @@ fun M3uScreen(
     viewModel: AppViewModel,
 ) {
     var urlInput by remember { mutableStateOf("https://github.com/iptv-com/iptv/raw/refs/heads/main/lists/brazil.m3u") }
-    val colors = theme.palette()
+    val colors = palette()
     
     Column(
         modifier = Modifier
@@ -86,7 +87,7 @@ private fun M3uChannelCard(
     item: CatalogItem,
     onClick: () -> Unit,
 ) {
-    val colors = theme.palette()
+    val colors = palette()
     
     Column(
         modifier = Modifier
