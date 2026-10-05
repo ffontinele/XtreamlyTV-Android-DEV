@@ -2,7 +2,10 @@ package com.xtreamlytv.androidtv.data
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.net.URL
+import java.io.BufferedReader
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URI
 
 data class M3uChannel(
     val id: String,
@@ -13,73 +16,76 @@ data class M3uChannel(
 )
 
 object M3uParser {
-    suspend fun parseFromUrl(url: String): List<M3uChannel> = withContext(Dispatchers.IO) {
-        val text = fetchWithAuth(url)
-        parse(text)
-    }
-    
-    private fun fetchWithAuth(url: String): String {
-        val parsed = java.net.URI(url).toURL()
+    const val MAX_CHANNELS = 15000
+
+    fun openConnection(url: String): HttpURLConnection {
+        val parsed = URI(url).toURL()
         val userInfo = parsed.userInfo
-        if (userInfo != null && userInfo.contains(':')) {
-            // URL com credenciais embutidas (http://user:pass@...)
-            val (user, pass) = userInfo.split(':', limit = 2)
-            val cleanUrl = "${parsed.protocol}://${parsed.host}:${parsed.port}${parsed.path}${if (parsed.query != null) "?${parsed.query}" else ""}"
-            val conn = java.net.URI(cleanUrl).toURL().openConnection() as java.net.HttpURLConnection
-            val auth = android.util.Base64.encodeToString("$user:$pass".toByteArray(), android.util.Base64.NO_WRAP)
-            conn.setRequestProperty("Authorization", "Basic $auth")
-            conn.connectTimeout = 15000
-            conn.readTimeout = 30000
-            return conn.inputStream.bufferedReader().use { it.readText() }
+        val conn = if (userInfo != null && userInfo.contains(':')) {
+            val clean = buildString {
+                append(parsed.protocol); append("://"); append(parsed.host)
+                if (parsed.port != -1) { append(':'); append(parsed.port) }
+                append(parsed.path)
+                if (parsed.query != null) { append('?'); append(parsed.query) }
+            }
+            URI(clean).toURL().openConnection() as HttpURLConnection
         } else {
-            // URL normal (sem auth ou com params GET)
-            return parsed.readText()
+            parsed.openConnection() as HttpURLConnection
         }
+        if (userInfo != null && userInfo.contains(':')) {
+            val auth = android.util.Base64.encodeToString(userInfo.toByteArray(), android.util.Base64.NO_WRAP)
+            conn.setRequestProperty("Authorization", "Basic $auth")
+        }
+        conn.connectTimeout = 15000
+        conn.readTimeout = 120000
+        conn.instanceFollowRedirects = true
+        return conn
     }
-    
-    fun parse(text: String): List<M3uChannel> {
-        val lines = text.lines()
-        val channels = mutableListOf<M3uChannel>()
-        var i = 0
+
+    fun parseReader(r: BufferedReader, limit: Int = MAX_CHANNELS): List<M3uChannel> {
+        val channels = ArrayList<M3uChannel>()
+        var pendingName: String? = null
+        var pendingGroup: String? = null
+        var pendingLogo: String? = null
         var counter = 0
-        while (i < lines.size) {
-            val line = lines[i].trim()
-            if (line.startsWith("#EXTINF:")) {
-                val attrs = parseAttributes(line)
-                val name = line.substringAfter(',', "").trim().ifBlank { "Channel ${counter + 1}" }
-                var url = ""
-                var j = i + 1
-                while (j < lines.size) {
-                    val next = lines[j].trim()
-                    if (next.isNotEmpty() && !next.startsWith("#")) {
-                        url = next
-                        break
-                    }
-                    j++
-                }
-                if (url.isNotEmpty()) {
-                    channels.add(M3uChannel(
+        while (true) {
+            val line = r.readLine() ?: break
+            val t = line.trim()
+            if (t.startsWith("#EXTINF:")) {
+                val attrs = parseAttributes(t)
+                pendingName = t.substringAfter(',', "").trim().ifBlank { null }
+                pendingGroup = attrs["group-title"]
+                pendingLogo = attrs["tvg-logo"]
+            } else if (t.isNotEmpty() && !t.startsWith("#")) {
+                channels.add(
+                    M3uChannel(
                         id = "m3u_${++counter}",
-                        name = name,
-                        group = attrs["group-title"] ?: "M3U Channels",
-                        logo = attrs["tvg-logo"],
-                        url = url,
-                    ))
-                }
-                i = j
-            } else {
-                i++
+                        name = pendingName ?: "Channel $counter",
+                        group = pendingGroup ?: "M3U Channels",
+                        logo = pendingLogo,
+                        url = t,
+                    )
+                )
+                pendingName = null; pendingGroup = null; pendingLogo = null
+                if (channels.size >= limit) break
             }
         }
         return channels
     }
-    
+
+    suspend fun parseFromUrl(url: String, limit: Int = MAX_CHANNELS): List<M3uChannel> = withContext(Dispatchers.IO) {
+        val conn = openConnection(url)
+        conn.inputStream.bufferedReader().use { r -> parseReader(r, limit) }
+    }
+
+    suspend fun parseFromFile(file: File, limit: Int = MAX_CHANNELS): List<M3uChannel> = withContext(Dispatchers.IO) {
+        file.bufferedReader().use { r -> parseReader(r, limit) }
+    }
+
     private fun parseAttributes(line: String): Map<String, String> {
         val attrs = mutableMapOf<String, String>()
-        val regex = Regex("""(\w[\w-]*)="([^"]*)"""")
-        regex.findAll(line).forEach { match ->
-            attrs[match.groupValues[1]] = match.groupValues[2]
-        }
+        val regex = Regex("""([\w-]+)="([^"]*)"""")
+        for (m in regex.findAll(line)) attrs[m.groupValues[1]] = m.groupValues[2]
         return attrs
     }
 }

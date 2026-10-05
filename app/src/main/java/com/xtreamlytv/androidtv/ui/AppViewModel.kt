@@ -244,19 +244,25 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         if (normalizedCredentials.kind == "m3u") {
             viewModelScope.launch {
                 try {
-                    val channels = withTimeout(CONNECTION_TIMEOUT_MS) { M3uParser.parseFromUrl(normalizedCredentials.server) }
+                    val channels = withTimeout(180_000L) {
+                        val f = ensureM3uLocal(normalizedCredentials)
+                        M3uParser.parseFromFile(f)
+                    }
                     client = null
                     m3uMode = true
                     m3uChannels.clear()
                     channels.forEach { m3uChannels[it.id] = it }
-                    val items = channels.map {
-                        CatalogItem(id = it.id, type = ContentType.LIVE, name = it.name, categoryId = it.group, imageUrl = it.logo)
+                    val itemsByGroup = mutableMapOf<String, MutableList<CatalogItem>>()
+                    val items = ArrayList<CatalogItem>(channels.size)
+                    channels.forEach { ch ->
+                        val item = CatalogItem(id = ch.id, type = ContentType.LIVE, name = ch.name, categoryId = ch.group, imageUrl = ch.logo)
+                        items.add(item)
+                        itemsByGroup.getOrPut(ch.group) { mutableListOf() }.add(item)
                     }
-                    val groups = channels.map { it.group }.distinct()
-                    val cats = listOf(Category(id = "all", name = "ALL")) + groups.map { Category(id = it, name = it) }
                     m3uCatalog.clear()
                     m3uCatalog["all"] = items
-                    groups.forEach { g -> m3uCatalog[g] = items.filter { it.categoryId == g } }
+                    m3uCatalog.putAll(itemsByGroup)
+                    val cats = listOf(Category(id = "all", name = "ALL")) + itemsByGroup.keys.map { Category(id = it, name = it) }
                     if (persist) {
                         withContext(Dispatchers.IO) {
                             val list = credentialsStore.loadAll().toMutableList()
@@ -581,6 +587,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         )
         addRecent(item)
         _state.update { it.copy(screen = AppScreen.Player(request, origin, returnFocus), error = null, focusRequest = null) }
+    }
+
+    private suspend fun ensureM3uLocal(cred: Credentials): java.io.File = withContext(Dispatchers.IO) {
+        val f = java.io.File(getApplication<android.app.Application>().cacheDir, "m3u_" + cred.id + ".m3u")
+        if (f.exists() && f.length() > 0) return@withContext f
+        val conn = M3uParser.openConnection(cred.server)
+        conn.inputStream.use { input -> f.outputStream().use { out -> input.copyTo(out, 65536) } }
+        f
     }
 
     private fun urlCandidatesFor(item: CatalogItem): List<String> {
@@ -1036,6 +1050,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun deleteProvider(id: String) {
+        runCatching { java.io.File(getApplication<android.app.Application>().cacheDir, "m3u_$id.m3u").delete() }
         val current = credentialsStore.loadAll().toMutableList()
         val removed = current.firstOrNull { it.id == id } ?: return
         current.remove(removed)
