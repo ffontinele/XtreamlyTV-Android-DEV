@@ -40,15 +40,15 @@ fun M3uScreen(
     val colors = palette()
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        Text("Load M3U Playlist", color = colors.text, fontSize = 24.sp)
         Text(
-            "DBG items=${state.items.size} | loading=${state.loading} | err=${state.error?.take(40)}",
-            color = Color.Yellow,
+            "Carregue uma lista publica (sem credenciais). Os canais abrem no Live TV com as categorias da propria lista. Para voltar ao seu provider: Settings > Use.",
+            color = colors.muted,
             fontSize = 12.sp,
         )
-        Text("Load M3U Playlist", color = colors.text, fontSize = 24.sp)
         TextField(
             value = urlInput,
             onValueChange = { urlInput = it },
@@ -84,30 +84,9 @@ fun M3uScreen(
         state.error?.let { err ->
             Text(
                 err,
-                color = if (err.startsWith("OK")) colors.accent else Color(0xFFE87968),
+                color = if (err.startsWith("OK") || err.startsWith("Lista")) colors.accent else Color(0xFFE87968),
                 fontSize = 13.sp,
             )
-        }
-        if (state.items.isNotEmpty()) {
-            Text("Loaded ${state.items.size} channels", color = colors.muted, fontSize = 14.sp)
-            Column(
-                modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                state.items.forEach { item ->
-                    Text(
-                        item.name,
-                        color = colors.text,
-                        fontSize = 14.sp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFF1A1A1A))
-                            .clickable { viewModel.play(item) }
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                    )
-                }
-            }
         }
     }
 }

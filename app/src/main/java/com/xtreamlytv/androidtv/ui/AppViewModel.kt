@@ -859,41 +859,49 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 f.delete()
                 val cred = Credentials(server = trimmed, username = "tab", password = "", id = "m3u_tab", name = "M3U Tab", kind = "m3u")
                 val local = ensureM3uLocal(cred)
-                val head = withContext(Dispatchers.IO) {
-                    runCatching { local.bufferedReader().use { it.readLine() } }.getOrDefault("(arquivo vazio/ilegivel)")
-                }
-                _state.update { it.copy(error = "Arquivo em cache: ${local.length()} bytes | 1a linha: ${head?.take(40)} | parseando...") }
                 val channels = M3uParser.parseFromFile(local, limit = 30_000)
-                populateTab(channels)
+                client = null
+                m3uMode = true
+                val cats = installM3uChannels(channels)
                 _state.update {
                     it.copy(
                         loading = false,
-                        screen = AppScreen.M3u,
-                        error = if (channels.isEmpty()) "Nenhum canal reconhecido no arquivo (1a linha: ${head?.take(40)})"
-                        else "OK: ${channels.size} canais carregados",
+                        screen = AppScreen.Catalog(ContentType.LIVE),
+                        error = "OK: ${channels.size} canais carregados (veja em Live TV)",
+                        provider = ProviderSummary(username = "M3U Tab", status = "Active", expiration = null),
+                        categories = cats,
+                        selectedCategories = emptyMap(),
+                        items = emptyList(),
+                        loadedItems = emptyMap(),
+                        searchQuery = "",
                     )
                 }
+                val firstType = cats.keys.firstOrNull() ?: ContentType.LIVE
+                val firstCat = cats[firstType]?.firstOrNull { it.id != firstType.name + ":all" } ?: cats[firstType]?.firstOrNull()
+                firstCat?.let { selectCategory(firstType, it) }
             } catch (e: Exception) {
                 _state.update { it.copy(loading = false, error = "ERRO ${e::class.simpleName}: ${e.message?.take(140)}") }
             }
         }
     }
 
-    private fun populateTab(channels: List<M3uChannel>) {
-        m3uChannels.clear()
-        channels.forEach { m3uChannels[it.id] = it }
-        val items = channels.map { ch ->
-            CatalogItem(id = ch.id, type = m3uItemType(ch), name = ch.name, categoryId = ch.group, imageUrl = ch.logo)
-        }
-        _state.update { it.copy(items = items) }
-    }
-
     fun refreshM3uTabFromCache() {
         viewModelScope.launch {
             val f = java.io.File(getApplication<android.app.Application>().cacheDir, "m3u_m3u_tab.m3u")
-            if (f.exists() && f.length() > 0 && _state.value.items.none { it.id.startsWith("m3u_") }) {
+            if (f.exists() && f.length() > 0 && !m3uMode) {
                 val channels = M3uParser.parseFromFile(f, limit = 30_000)
-                populateTab(channels)
+                client = null
+                m3uMode = true
+                val cats = installM3uChannels(channels)
+                _state.update {
+                    it.copy(
+                        error = "Lista do cache reativada: ${channels.size} canais em Live TV",
+                        categories = cats,
+                        selectedCategories = emptyMap(),
+                        items = emptyList(),
+                        loadedItems = emptyMap(),
+                    )
+                }
             }
         }
     }
@@ -1156,7 +1164,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                     credentialsStore.setActive(cred.id)
                     _state.update {
                         it.copy(
-                            screen = AppScreen.Home,
+                            screen = AppScreen.Catalog(ContentType.LIVE),
                             initializing = false,
                             loading = false,
                             catalogsLoading = false,
@@ -1170,6 +1178,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                             credentials = cred,
                         )
                     }
+                    val firstType = cats.keys.firstOrNull() ?: ContentType.LIVE
+                    val firstCat = cats[firstType]?.firstOrNull { it.id != firstType.name + ":all" } ?: cats[firstType]?.firstOrNull()
+                    firstCat?.let { selectCategory(firstType, it) }
                     onResult("Lista pública carregada do arquivo.")
                 }
             } catch (e: Exception) {
