@@ -855,10 +855,28 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = "Baixando lista...") }
             try {
-                val f = java.io.File(getApplication<android.app.Application>().cacheDir, "m3u_m3u_tab.m3u")
-                f.delete()
-                val cred = Credentials(server = trimmed, username = "tab", password = "", id = "m3u_tab", name = "M3U Tab", kind = "m3u")
-                val local = ensureM3uLocal(cred)
+                val derived = runCatching {
+                    val u = java.net.URI(trimmed)
+                    (u.path?.substringAfterLast('/')?.takeIf { it.isNotBlank() } ?: u.host).take(24)
+                }.getOrDefault("M3U List")
+                val credId = "m3u_" + Integer.toHexString(trimmed.hashCode())
+                val newCred = Credentials(server = trimmed, username = "m3u", password = "", id = credId, name = derived, kind = "m3u")
+                val list = credentialsStore.loadAll().toMutableList()
+                val idx = list.indexOfFirst { it.kind == "m3u" && it.server == trimmed }
+                val useCred = if (idx >= 0) {
+                    list[idx] = list[idx].copy(name = derived)
+                    credentialsStore.saveAll(list)
+                    credentialsStore.setActive(list[idx].id)
+                    list[idx]
+                } else {
+                    list.add(newCred)
+                    credentialsStore.saveAll(list)
+                    credentialsStore.setActive(credId)
+                    newCred
+                }
+                val cacheFile = java.io.File(getApplication<android.app.Application>().cacheDir, "m3u_" + useCred.id + ".m3u")
+                cacheFile.delete()
+                val local = ensureM3uLocal(useCred)
                 val channels = M3uParser.parseFromFile(local, limit = 30_000)
                 client = null
                 m3uMode = true
@@ -867,13 +885,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                     it.copy(
                         loading = false,
                         screen = AppScreen.Catalog(ContentType.LIVE),
-                        error = "OK: ${channels.size} canais carregados (veja em Live TV)",
-                        provider = ProviderSummary(username = "M3U Tab", status = "Active", expiration = null),
+                        error = "OK: ${channels.size} canais salvos como provider \"${useCred.name}\" (veja em Live TV)",
+                        provider = ProviderSummary(username = useCred.name, status = "Active", expiration = null),
                         categories = cats,
                         selectedCategories = emptyMap(),
                         items = emptyList(),
                         loadedItems = emptyMap(),
                         searchQuery = "",
+                        credentials = useCred,
                     )
                 }
                 val firstType = cats.keys.firstOrNull() ?: ContentType.LIVE

@@ -193,6 +193,7 @@ private fun ProviderRow(
             Box(Modifier.size(8.dp).background(if (active) colors.accent else colors.muted, CircleShape))
             Spacer(Modifier.width(10.dp))
             Text(cred.name, color = colors.text, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            if (cred.kind == "m3u") Text("M3U", color = colors.muted, fontSize = 9.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 6.dp))
             if (active) Text("ACTIVE", color = colors.accent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(4.dp))
