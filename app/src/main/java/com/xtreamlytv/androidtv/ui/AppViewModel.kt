@@ -628,7 +628,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private fun urlCandidatesFor(item: CatalogItem): List<String> {
         m3uChannels[item.id]?.let { return listOf(it.url) }
         val api = client ?: return emptyList()
-        return urlCandidatesFor(item)
+        return api.streamCandidates(item, _state.value.settings.streamFormat)
     }
 
     fun playAdjacent(delta: Int) {
