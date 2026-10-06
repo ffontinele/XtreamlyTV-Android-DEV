@@ -777,7 +777,7 @@ private data class SubStyle(
     val shadow: Boolean = true,
 )
 
-private const val SUB_RENDERER_ON = false
+private const val SUB_RENDERER_ON = true
 
 private val SUB_COLORS = listOf(Color.White, Color.Black, Color.Red, Color(0xFF4CD964), Color.Yellow, Color.Cyan)
 private val SUB_SIZES = floatArrayOf(14f, 18f, 22f, 26f)
