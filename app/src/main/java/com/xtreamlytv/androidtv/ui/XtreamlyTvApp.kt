@@ -245,7 +245,12 @@ private fun Topbar(title: String, state: AppUiState) {
         state.provider?.let { provider ->
             Box(Modifier.size(7.dp).background(colors.accent, CircleShape))
             Spacer(Modifier.width(8.dp))
-            Text(provider.status.ifBlank { "Connected" }, color = colors.muted, fontSize = 10.sp, maxLines = 1)
+            Text(
+                (state.credentials?.name?.takeIf { it.isNotBlank() }?.let { "${it.take(24)} · " } ?: "") + provider.status.ifBlank { "Connected" },
+                color = colors.muted,
+                fontSize = 10.sp,
+                maxLines = 1,
+            )
             Spacer(Modifier.width(17.dp))
             ClockText()
         }
