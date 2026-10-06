@@ -339,7 +339,7 @@ fun PlayerScreen(
         }
 
         val subtitleText = runCatching { subtitleCues.joinToString("\n") { it.text?.toString().orEmpty() }.trim() }.getOrDefault("")
-        if (subtitleText.isNotEmpty()) {
+        if (SUB_RENDERER_ON && subtitleText.isNotEmpty()) {
             Box(
                 Modifier.fillMaxSize(),
                 contentAlignment = if (subStyle.positionTop) Alignment.TopCenter else Alignment.BottomCenter,
@@ -776,6 +776,8 @@ private data class SubStyle(
     val bgIdx: Int = 1,
     val shadow: Boolean = true,
 )
+
+private const val SUB_RENDERER_ON = false
 
 private val SUB_COLORS = listOf(Color.White, Color.Black, Color.Red, Color(0xFF4CD964), Color.Yellow, Color.Cyan)
 private val SUB_SIZES = floatArrayOf(14f, 18f, 22f, 26f)
