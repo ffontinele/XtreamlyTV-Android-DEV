@@ -257,7 +257,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                     if (persist) {
                         withContext(Dispatchers.IO) {
                             val list = credentialsStore.loadAll().toMutableList()
-                            val idx = list.indexOfFirst { it.server == normalizedCredentials.server && it.username == normalizedCredentials.username }
+                            val idx = list.indexOfFirst { (it.server == normalizedCredentials.server || ProviderUrl.normalize(it.server) == normalizedCredentials.server || it.server == ProviderUrl.normalize(normalizedCredentials.server)) && it.username == normalizedCredentials.username }
                             if (idx >= 0) { list[idx] = normalizedCredentials.copy(id = list[idx].id, name = list[idx].name) } else { list.add(normalizedCredentials) }
                             credentialsStore.saveAll(list)
                             credentialsStore.setActive(normalizedCredentials.id)
@@ -303,7 +303,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 if (persist) {
                     withContext(Dispatchers.IO) {
                         val list = credentialsStore.loadAll().toMutableList()
-                        val idx = list.indexOfFirst { it.server == normalizedCredentials.server && it.username == normalizedCredentials.username }
+                        val idx = list.indexOfFirst { (it.server == normalizedCredentials.server || ProviderUrl.normalize(it.server) == normalizedCredentials.server || it.server == ProviderUrl.normalize(normalizedCredentials.server)) && it.username == normalizedCredentials.username }
                         if (idx >= 0) { list[idx] = normalizedCredentials.copy(id = list[idx].id, name = list[idx].name) } else { list.add(normalizedCredentials) }
                         credentialsStore.saveAll(list)
                         credentialsStore.setActive(normalizedCredentials.id)
