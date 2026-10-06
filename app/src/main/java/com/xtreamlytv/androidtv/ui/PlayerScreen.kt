@@ -14,6 +14,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.focusable
+import androidx.core.view.isVisible
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -274,7 +275,7 @@ fun PlayerScreen(
             factory = { ctx ->
                 PlayerView(ctx).apply {
                     useController = false
-                    subtitleView?.visibility = android.view.View.GONE
+                    runCatching { subtitleView?.isVisible = false }
                     resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
                     layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
                     this.player = player
@@ -337,7 +338,7 @@ fun PlayerScreen(
             )
         }
 
-        val subtitleText = subtitleCues.joinToString("\n") { it.text?.toString() ?: "" }.trim()
+        val subtitleText = runCatching { subtitleCues.joinToString("\n") { it.text?.toString().orEmpty() }.trim() }.getOrDefault("")
         if (subtitleText.isNotEmpty()) {
             Box(
                 Modifier.fillMaxSize(),
