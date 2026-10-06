@@ -410,8 +410,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         )
     }
 
-    fun openM3u() = _state.update {
-        it.copy(screen = AppScreen.M3u, items = emptyList(), searchQuery = "", error = null, focusRequest = null)
+    fun openM3u() {
+        _state.update { it.copy(screen = AppScreen.M3u, searchQuery = "", error = null, focusRequest = null) }
+        refreshM3uTabFromCache()
     }
 
     fun openSettings() = _state.update {
@@ -849,30 +850,39 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun loadM3uFromUrl(url: String) {
+        val trimmed = url.trim()
+        if (trimmed.isBlank()) return
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = null) }
             try {
-                val channels = M3uParser.parseFromUrl(url)
-                m3uChannels.clear()
-                channels.forEach { m3uChannels[it.id] = it }
-                val items = channels.map { 
-                    CatalogItem(
-                        id = it.id,
-                        type = ContentType.LIVE,
-                        name = it.name,
-                    )
-                }
-                _state.update { 
-                    it.copy(
-                        items = items,
-                        loading = false,
-                        screen = AppScreen.Catalog(ContentType.LIVE),
-                    ) 
-                }
+                val f = java.io.File(getApplication<android.app.Application>().cacheDir, "m3u_m3u_tab.m3u")
+                f.delete()
+                val cred = Credentials(server = trimmed, username = "tab", password = "", id = "m3u_tab", name = "M3U Tab", kind = "m3u")
+                val local = ensureM3uLocal(cred)
+                val channels = M3uParser.parseFromFile(local, limit = 30_000)
+                populateTab(channels)
+                _state.update { it.copy(loading = false, screen = AppScreen.M3u, error = null) }
             } catch (e: Exception) {
-                _state.update { 
-                    it.copy(loading = false, error = "Failed to load M3U: ${e.message}") 
-                }
+                _state.update { it.copy(loading = false, error = "Failed to load M3U: ${e.message}") }
+            }
+        }
+    }
+
+    private fun populateTab(channels: List<M3uChannel>) {
+        m3uChannels.clear()
+        channels.forEach { m3uChannels[it.id] = it }
+        val items = channels.map { ch ->
+            CatalogItem(id = ch.id, type = m3uItemType(ch), name = ch.name, categoryId = ch.group, imageUrl = ch.logo)
+        }
+        _state.update { it.copy(items = items) }
+    }
+
+    fun refreshM3uTabFromCache() {
+        viewModelScope.launch {
+            val f = java.io.File(getApplication<android.app.Application>().cacheDir, "m3u_m3u_tab.m3u")
+            if (f.exists() && f.length() > 0 && _state.value.items.none { it.id.startsWith("m3u_") }) {
+                val channels = M3uParser.parseFromFile(f, limit = 30_000)
+                populateTab(channels)
             }
         }
     }

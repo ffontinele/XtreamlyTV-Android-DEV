@@ -72,16 +72,6 @@ fun M3uScreen(
                 .padding(horizontal = 20.dp, vertical = 10.dp),
         )
 
-        Text(
-            "💾 Save as provider",
-            color = colors.text,
-            fontSize = 14.sp,
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color(0xFF2A2A2A))
-                .clickable { viewModel.addM3uProvider("M3U List", urlInput) }
-                .padding(horizontal = 20.dp, vertical = 10.dp),
-        )
         
         if (state.items.isNotEmpty() && state.items.first().id.startsWith("m3u_")) {
             Text(
