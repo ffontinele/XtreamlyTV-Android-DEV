@@ -39,6 +39,10 @@ object M3uParser {
         conn.connectTimeout = 15000
         conn.readTimeout = 120000
         conn.instanceFollowRedirects = true
+        conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36")
+        conn.setRequestProperty("Accept", "*/*")
+        val code = conn.responseCode
+        if (code !in 200..299) throw java.io.IOException("HTTP $code ao baixar a lista")
         return conn
     }
 

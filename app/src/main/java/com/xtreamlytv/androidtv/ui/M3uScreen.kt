@@ -82,12 +82,12 @@ fun M3uScreen(
         }
         state.error?.let { err ->
             Text(
-                "Erro ao carregar: $err",
-                color = Color(0xFFE87968),
+                err,
+                color = if (err.startsWith("OK")) colors.accent else Color(0xFFE87968),
                 fontSize = 13.sp,
             )
         }
-        if (state.items.isNotEmpty() && state.items.first().id.startsWith("m3u_")) {
+        if (state.items.isNotEmpty()) {
             Text(
                 "Loaded ${state.items.size} channels",
                 color = colors.muted,

@@ -853,28 +853,30 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         val trimmed = url.trim()
         if (trimmed.isBlank()) return
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, error = null) }
+            _state.update { it.copy(loading = true, error = "Baixando lista...") }
             try {
                 val f = java.io.File(getApplication<android.app.Application>().cacheDir, "m3u_m3u_tab.m3u")
                 f.delete()
                 val cred = Credentials(server = trimmed, username = "tab", password = "", id = "m3u_tab", name = "M3U Tab", kind = "m3u")
                 val local = ensureM3uLocal(cred)
+                val head = withContext(Dispatchers.IO) {
+                    runCatching { local.bufferedReader().use { it.readLine() } }.getOrDefault("(arquivo vazio/ilegivel)")
+                }
+                _state.update { it.copy(error = "Arquivo em cache: ${local.length()} bytes | 1a linha: ${head?.take(40)} | parseando...") }
                 val channels = M3uParser.parseFromFile(local, limit = 30_000)
                 populateTab(channels)
-                _state.update { it.copy(loading = false, screen = AppScreen.M3u, error = null) }
+                _state.update {
+                    it.copy(
+                        loading = false,
+                        screen = AppScreen.M3u,
+                        error = if (channels.isEmpty()) "Nenhum canal reconhecido no arquivo (1a linha: ${head?.take(40)})"
+                        else "OK: ${channels.size} canais carregados",
+                    )
+                }
             } catch (e: Exception) {
-                _state.update { it.copy(loading = false, error = "Failed to load M3U: ${e.message}") }
+                _state.update { it.copy(loading = false, error = "ERRO ${e::class.simpleName}: ${e.message?.take(140)}") }
             }
         }
-    }
-
-    private fun populateTab(channels: List<M3uChannel>) {
-        m3uChannels.clear()
-        channels.forEach { m3uChannels[it.id] = it }
-        val items = channels.map { ch ->
-            CatalogItem(id = ch.id, type = m3uItemType(ch), name = ch.name, categoryId = ch.group, imageUrl = ch.logo)
-        }
-        _state.update { it.copy(items = items) }
     }
 
     fun refreshM3uTabFromCache() {
