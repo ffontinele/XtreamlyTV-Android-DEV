@@ -879,6 +879,15 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun populateTab(channels: List<M3uChannel>) {
+        m3uChannels.clear()
+        channels.forEach { m3uChannels[it.id] = it }
+        val items = channels.map { ch ->
+            CatalogItem(id = ch.id, type = m3uItemType(ch), name = ch.name, categoryId = ch.group, imageUrl = ch.logo)
+        }
+        _state.update { it.copy(items = items) }
+    }
+
     fun refreshM3uTabFromCache() {
         viewModelScope.launch {
             val f = java.io.File(getApplication<android.app.Application>().cacheDir, "m3u_m3u_tab.m3u")
