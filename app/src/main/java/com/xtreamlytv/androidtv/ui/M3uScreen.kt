@@ -27,7 +27,7 @@ fun M3uScreen(
     state: AppUiState,
     viewModel: AppViewModel,
 ) {
-    var urlInput by remember { mutableStateOf("https://github.com/iptv-com/iptv/raw/refs/heads/main/lists/brazil.m3u") }
+    var urlInput by remember { mutableStateOf("https://iptv-org.github.io/iptv/countries/br.m3u") }
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? -> uri?.let { viewModel.importM3uFromFile(it) } }
     val colors = palette()
     
@@ -73,6 +73,20 @@ fun M3uScreen(
         )
 
         
+        if (state.loading) {
+            Text(
+                "Carregando lista... (pode levar alguns segundos)",
+                color = colors.accent,
+                fontSize = 14.sp,
+            )
+        }
+        state.error?.let { err ->
+            Text(
+                "Erro ao carregar: $err",
+                color = Color(0xFFE87968),
+                fontSize = 13.sp,
+            )
+        }
         if (state.items.isNotEmpty() && state.items.first().id.startsWith("m3u_")) {
             Text(
                 "Loaded ${state.items.size} channels",
