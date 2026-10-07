@@ -559,7 +559,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             val returnFocus = focusForScreen(origin)
             val request = PlayerRequest(
                 item = item,
-                queue = listOf(item),
+                queue = queue.ifEmpty { listOf(item) },
                 urlCandidates = listOf(m3u.url),
                 startPositionMs = 0L,
             )
