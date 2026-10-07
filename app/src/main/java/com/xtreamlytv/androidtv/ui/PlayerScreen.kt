@@ -531,7 +531,10 @@ private fun PlayerControls(
             } else {
                 Text("${formatDuration(position)} / ${formatDuration(duration)}", color = colors.muted, fontSize = 9.sp)
             }
-            if (request.item.type != ContentType.LIVE && request.queue.size > 1) {
+            if (request.item.type == ContentType.LIVE && request.queue.size > 1) {
+                Text("◀ Canal ant.", color = colors.accent, fontSize = 9.sp, modifier = Modifier.clickable { onPrevious() }.padding(6.dp))
+                Text("Canal próx. ▶", color = colors.accent, fontSize = 9.sp, modifier = Modifier.clickable { onNext() }.padding(6.dp))
+            } else if (request.item.type != ContentType.LIVE && request.queue.size > 1) {
                 Text("◀ Ep ant.", color = colors.accent, fontSize = 9.sp, modifier = Modifier.clickable { onPreviousEpisode() }.padding(6.dp))
                 Text("Ep próx. ▶", color = colors.accent, fontSize = 9.sp, modifier = Modifier.clickable { onNextEpisode() }.padding(6.dp))
             }
