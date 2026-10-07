@@ -531,9 +531,8 @@ private fun PlayerControls(
             } else {
                 Text("${formatDuration(position)} / ${formatDuration(duration)}", color = colors.muted, fontSize = 9.sp)
             }
-            // Mostrar botões de navegação sempre que houver mais de 1 canal/episódio
-            val hasMultipleItems = request.queue.size > 1 || (request.item.type == ContentType.LIVE && m3uChannels.isNotEmpty())
-            if (hasMultipleItems) {
+            // Mostrar botões de navegação: sempre na Live TV, ou em VOD se houver fila
+            if (request.item.type == ContentType.LIVE || request.queue.size > 1) {
                 if (request.item.type == ContentType.LIVE) {
                     Text("◀ Canal ant.", color = colors.accent, fontSize = 9.sp, modifier = Modifier.clickable { onPreviousEpisode() }.padding(6.dp))
                     Text("Canal próx. ▶", color = colors.accent, fontSize = 9.sp, modifier = Modifier.clickable { onNextEpisode() }.padding(6.dp))
