@@ -111,7 +111,6 @@ fun PlayerScreen(
     var showSubPanel by remember { mutableStateOf(false) }
     var autoApplied by remember(request.item.id) { mutableStateOf(false) }
     var subtitleCues by remember(request.item.id) { mutableStateOf<List<Cue>>(emptyList()) }
-    var dbgCueCalls by remember(request.item.id) { mutableIntStateOf(0) }
     var showSubSettings by remember { mutableStateOf(false) }
     var subStyle by remember { mutableStateOf(loadSubStyle(context)) }
     val allGroups = trackGroups?.groups ?: emptyList<Tracks.Group>()
@@ -174,7 +173,6 @@ fun PlayerScreen(
             }
 
             override fun onCues(cueGroup: CueGroup) {
-                dbgCueCalls += 1
                 subtitleCues = cueGroup.cues
             }
 
@@ -343,15 +341,6 @@ fun PlayerScreen(
             )
         }
 
-        val dbgMime = trackGroups?.groups?.firstOrNull { it.type == C.TRACK_TYPE_TEXT }?.let { g ->
-            (0 until g.length).firstOrNull { g.isTrackSelected(it) }?.let { g.getTrackFormat(it).sampleMimeType }
-        } ?: "-"
-        Text(
-            "DIAG calls=$dbgCueCalls cues=${subtitleCues.size} mime=$dbgMime",
-            color = Color.Yellow,
-            fontSize = 11.sp,
-            modifier = Modifier.align(Alignment.TopStart).padding(8.dp).zIndex(99f),
-        )
         val subtitleText = runCatching { subtitleCues.joinToString("\n") { it.text?.toString().orEmpty() }.trim() }.getOrDefault("")
         if (SUB_RENDERER_ON) {
             // Suporte a legendas bitmap (PGS/DVB)
