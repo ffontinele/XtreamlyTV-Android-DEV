@@ -61,7 +61,7 @@ fun LoginScreen(state: AppUiState, onConnect: (Credentials) -> Unit) {
         while (true) {
             val pending = kotlinx.coroutines.Dispatchers.IO.let { kotlinx.coroutines.withContext(it) { CloudSync.pollPending(context) } }
             pending.forEach { p ->
-                onConnect(Credentials(p.server, p.username, p.password))
+                onConnect(Credentials(server = p.server, username = p.username, password = p.password, name = p.name))
                 kotlinx.coroutines.Dispatchers.IO.let { kotlinx.coroutines.withContext(it) { CloudSync.markLoaded(context, p.id) } }
             }
             delay(5000)
