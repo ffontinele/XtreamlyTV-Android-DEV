@@ -301,13 +301,17 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 client = candidate
                 categoryCache.clear()
                 if (persist) {
+                    val namedCred = if (normalizedCredentials.name.isBlank() || normalizedCredentials.name == "Default") {
+                        normalizedCredentials.copy(name = normalizedCredentials.server.removePrefix("http://").removePrefix("https://").substringBefore("/").substringBefore(":"))
+                    } else normalizedCredentials
                     withContext(Dispatchers.IO) {
                         val list = credentialsStore.loadAll().toMutableList()
-                        val idx = list.indexOfFirst { (it.server == normalizedCredentials.server || ProviderUrl.normalize(it.server) == normalizedCredentials.server || it.server == ProviderUrl.normalize(normalizedCredentials.server)) && it.username == normalizedCredentials.username }
-                        if (idx >= 0) { list[idx] = normalizedCredentials.copy(id = list[idx].id, name = list[idx].name) } else { list.add(normalizedCredentials) }
+                        val idx = list.indexOfFirst { (it.server == namedCred.server || ProviderUrl.normalize(it.server) == namedCred.server || it.server == ProviderUrl.normalize(namedCred.server)) && it.username == namedCred.username }
+                        if (idx >= 0) { list[idx] = namedCred.copy(id = list[idx].id, name = list[idx].name) } else { list.add(namedCred) }
                         credentialsStore.saveAll(list)
-                        credentialsStore.setActive(normalizedCredentials.id)
+                        credentialsStore.setActive(namedCred.id)
                     }
+                    _state.update { it.copy(credentials = namedCred) }
                 }
                 _state.update {
                     it.copy(

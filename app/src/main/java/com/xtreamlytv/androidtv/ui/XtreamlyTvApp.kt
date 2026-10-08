@@ -73,7 +73,7 @@ fun XtreamlyTvApp(
             pending.forEach { p ->
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Lista recebida: " + p.name, Toast.LENGTH_LONG).show()
-                    viewModel.connect(Credentials(p.server, p.username, p.password))
+                    viewModel.connect(Credentials(server = p.server, username = p.username, password = p.password, name = p.name))
                 }
                 withContext(Dispatchers.IO) { CloudSync.markLoaded(context, p.id) }
             }
