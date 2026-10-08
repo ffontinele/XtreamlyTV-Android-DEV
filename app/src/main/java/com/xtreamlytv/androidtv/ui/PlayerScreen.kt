@@ -364,6 +364,14 @@ fun PlayerScreen(
                 )
             }
         }
+        val bitmapCue = subtitleCues.firstOrNull { it.bitmap != null }
+        bitmapCue?.let { cue ->
+            Image(
+                bitmap = cue.bitmap!!.asImageBitmap(),
+                contentDescription = null,
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 110.dp).zIndex(10f),
+            )
+        }
         if (SUB_RENDERER_ON && subtitleText.isNotEmpty()) {
             Box(
                 Modifier.fillMaxSize().zIndex(10f),
