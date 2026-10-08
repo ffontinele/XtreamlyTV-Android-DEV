@@ -30,6 +30,9 @@ object M3uCredentialExtractor {
         if (p.port > 0) { append(':'); append(p.port) }
     }
 
+    private fun hostOf(server: String): String =
+        server.removePrefix("http://").removePrefix("https://").substringBefore("/").substringBefore(":")
+
     fun extract(text: String): Credentials? {
         val urls = Regex("https?://[^\\s\"'<>]+").findAll(text).map { it.value }.take(300).toList()
         val generic = linkedMapOf<Pair<String, String>, Int>()
@@ -44,12 +47,12 @@ object M3uCredentialExtractor {
                 val user = Regex("username=([^&]+)").find(q)?.groupValues?.get(1)?.let { java.net.URLDecoder.decode(it, "UTF-8") }
                 val pass = Regex("password=([^&]+)").find(q)?.groupValues?.get(1)?.let { java.net.URLDecoder.decode(it, "UTF-8") }
                 if (!user.isNullOrBlank() && !pass.isNullOrBlank()) {
-                    return Credentials(server = server, username = user, password = pass, name = "M3U Import", kind = "xtream")
+                    return Credentials(server = server, username = user, password = pass, name = hostOf(server), kind = "xtream")
                 }
             }
             // Regra 2: /live|movie|series/user/pass/ (imediata, como no original)
             Regex("/(?:live|movie|series)/([^/]+)/([^/]+)/").find(path)?.let { m ->
-                return Credentials(server = server, username = m.groupValues[1], password = m.groupValues[2], name = "M3U Import", kind = "xtream")
+                return Credentials(server = server, username = m.groupValues[1], password = m.groupValues[2], name = hostOf(server), kind = "xtream")
             }
             // Regra 3: generica SOMENTE com ID numerico + corroboracao 2+ (anti-fantasma)
             val segs = path.split('/').filter { it.isNotEmpty() }
@@ -64,6 +67,6 @@ object M3uCredentialExtractor {
         val safe = generic.entries.firstOrNull { it.value >= 2 } ?: return null
         val (srv, pair) = safe.key
         val (user, pass) = pair.split("/", limit = 2).let { it[0] to it.getOrElse(1) { "" } }
-        return Credentials(server = srv, username = user, password = pass, name = "M3U Import", kind = "xtream")
+        return Credentials(server = srv, username = user, password = pass, name = hostOf(srv), kind = "xtream")
     }
 }
