@@ -47,6 +47,8 @@ import androidx.compose.ui.zIndex
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
@@ -351,9 +353,20 @@ fun PlayerScreen(
             modifier = Modifier.align(Alignment.TopStart).padding(8.dp).zIndex(99f),
         )
         val subtitleText = runCatching { subtitleCues.joinToString("\n") { it.text?.toString().orEmpty() }.trim() }.getOrDefault("")
+        if (SUB_RENDERER_ON) {
+            // Suporte a legendas bitmap (PGS/DVB)
+            val bitmapCue = subtitleCues.firstOrNull { it.bitmap != null }
+            bitmapCue?.let { cue ->
+                Image(
+                    bitmap = cue.bitmap!!.asImageBitmap(),
+                    contentDescription = null,
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 110.dp).zIndex(10f),
+                )
+            }
+        }
         if (SUB_RENDERER_ON && subtitleText.isNotEmpty()) {
             Box(
-                Modifier.fillMaxSize(),
+                Modifier.fillMaxSize().zIndex(10f),
                 contentAlignment = if (subStyle.positionTop) Alignment.TopCenter else Alignment.BottomCenter,
             ) {
                 Text(
